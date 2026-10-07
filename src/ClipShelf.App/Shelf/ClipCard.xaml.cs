@@ -25,7 +25,7 @@ public sealed partial class ClipCard : UserControl
             {
                 using var stream = new InMemoryRandomAccessStream();
                 using (var writer = new DataWriter(stream.GetOutputStreamAt(0))) { writer.WriteBytes(bytes); await writer.StoreAsync(); writer.DetachStream(); }
-                stream.Seek(0); var icon = new BitmapImage { DecodePixelWidth = 32 }; await icon.SetSourceAsync(stream);
+                stream.Seek(0); var icon = new BitmapImage { DecodePixelWidth = 80 }; await icon.SetSourceAsync(stream);
                 if (!ReferenceEquals(DataContext, entry)) return;
                 SourceIcon.Source = icon; SourceFallback.Visibility = Visibility.Collapsed;
             }

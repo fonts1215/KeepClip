@@ -15,7 +15,7 @@ internal sealed class SelectionCopyService(DispatcherQueue dispatcher, HistorySe
     Request? pending;
     CancellationTokenSource? lifetime;
     public event Action<string>? Problem;
-    sealed record Request(NativeMethods.Point Point, nint Window, uint Sequence, long Generation, long Version, CancellationToken Token);
+    sealed record Request(NativeMethods.Point Point, NativeMethods.Point Start, nint Window, uint Sequence, long Generation, long Version, CancellationToken Token);
     public bool Start()
     {
         if (hook != 0) return true;
@@ -56,7 +56,7 @@ internal sealed class SelectionCopyService(DispatcherQueue dispatcher, HistorySe
                         var window = NativeMethods.GetForegroundWindow(); NativeMethods.GetWindowThreadProcessId(window, out var process);
                         if ((drag || doubleClick || shift) && !modifiers && process != 0 && process != Environment.ProcessId && lifetime is not null)
                         {
-                            var request = new Request(mouse.Point, window, downSequence, history.CaptureGeneration, ++version, lifetime.Token);
+                            var request = new Request(mouse.Point, down, window, downSequence, history.CaptureGeneration, ++version, lifetime.Token);
                             dispatcher.TryEnqueue(() => { if (Current(request)) { pending = request; if (!reading) ReadPending(); } });
                         }
                     }
@@ -78,14 +78,18 @@ internal sealed class SelectionCopyService(DispatcherQueue dispatcher, HistorySe
                 pending = null;
                 try
                 {
-                    await Task.Delay(100, request.Token);
-                    if (!Current(request) || NativeMethods.GetClipboardSequenceNumber() != request.Sequence) continue;
                     NativeMethods.GetWindowThreadProcessId(request.Window, out var process);
-                    SelectedText? text;
-                    try { text = await Task.Run(() => SelectedTextReader.Read(request.Point, process), request.Token); }
-                    catch (OperationCanceledException) { throw; }
-                    catch (Exception ex) { DiagnosticLog.Write($"selection-reader-unavailable type={ex.GetType().Name}"); continue; }
-                    if (text is null || !Current(request) || NativeMethods.GetClipboardSequenceNumber() != request.Sequence) continue;
+                    var attempt = 0;
+                    var text = await SelectionReadRetry.ReadAsync(async token =>
+                    {
+                        attempt++;
+                        try { return await Task.Run(() => SelectedTextReader.Read(request.Point, request.Start, process), token); }
+                        catch (OperationCanceledException) { throw; }
+                        catch (Exception ex) { DiagnosticLog.Write($"selection-reader-unavailable attempt={attempt} type={ex.GetType().Name}"); return null; }
+                    }, () => Current(request) && NativeMethods.GetClipboardSequenceNumber() == request.Sequence,
+                    (ms, token) => Task.Delay(ms, token), request.Token);
+                    DiagnosticLog.Write($"selection-read attempts={attempt} found={text is not null}");
+                    if (text is null || text.IsPassword || text.IsOwnApp || !Current(request) || NativeMethods.GetClipboardSequenceNumber() != request.Sequence) continue;
                     var origin = await SourceAppResolver.ResolveAsync(process);
                     if (!Current(request) || NativeMethods.GetClipboardSequenceNumber() != request.Sequence) continue;
                     var saved = await copy.CopyAsync(text with { Source = origin }, () => Current(request), request.Token);

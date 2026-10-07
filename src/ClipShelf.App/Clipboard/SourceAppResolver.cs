@@ -50,7 +50,7 @@ internal static class SourceAppResolver
                 try
                 {
                     var info = AppInfo.GetFromAppUserModelId(identity.appId);
-                    using var stream = await info.DisplayInfo.GetLogo(new Size(32,32)).OpenReadAsync();
+                    using var stream = await info.DisplayInfo.GetLogo(new Size(64,64)).OpenReadAsync();
                     if (stream.Size <= 262144)
                     {
                         using var reader = new DataReader(stream);
@@ -70,7 +70,7 @@ internal static class SourceAppResolver
                     using var original = System.Drawing.Icon.ExtractAssociatedIcon(identity.path);
                     if (original is null) return null;
                     using var bitmap = original.ToBitmap();
-                    using var small = new System.Drawing.Bitmap(bitmap, 32, 32);
+                    using var small = new System.Drawing.Bitmap(bitmap, 64, 64);
                     using var output = new MemoryStream();
                     small.Save(output, System.Drawing.Imaging.ImageFormat.Png);
                     return output.ToArray();
