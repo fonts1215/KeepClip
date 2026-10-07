@@ -124,6 +124,7 @@ internal sealed class SelectionCopyService(DispatcherQueue dispatcher, HistorySe
                     var saved = await copy.CopyAsync(text with { Source = origin }, () => Current(request), request.Token);
                     DiagnosticLog.Write($"selection-copy request={request.Version} captured={saved} reason={InvalidReason(request)}");
                 }
+                catch (ClipboardWriteSupersededException) { DiagnosticLog.Write($"selection-discard request={request.Version} stage=flush reason=clipboard-changed"); }
                 catch (OperationCanceledException) { DiagnosticLog.Write($"selection-discard request={request.Version} stage=cancel reason={InvalidReason(request)}"); }
                 catch (Exception ex)
                 {

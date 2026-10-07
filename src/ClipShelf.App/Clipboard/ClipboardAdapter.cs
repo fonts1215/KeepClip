@@ -10,12 +10,12 @@ internal sealed class ClipboardAdapter : IClipboardAdapter
 {
     const string PrivateFormat = "ClipShelf.Owner.v1";
     readonly string owner = Guid.NewGuid().ToString("N");
-    readonly HashSet<uint> ownSequences = [];
-    readonly Queue<uint> ownSequenceOrder = new();
+
+
     public async Task<ClipboardSnapshot?> ReadAsync(CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested(); var sequence = NativeMethods.GetClipboardSequenceNumber();
-        if (ownSequences.Contains(sequence)) return new(new(ClipKind.Text), sequence, true);
+
         var sourceProcess = SourceAppResolver.ClipboardProcess();
         var view = WinClipboard.GetContent();
         if (view.Contains(PrivateFormat) && (await view.GetDataAsync(PrivateFormat)) is string token && token.StartsWith(owner + ":", StringComparison.Ordinal))
@@ -76,7 +76,7 @@ internal sealed class ClipboardAdapter : IClipboardAdapter
         try
         {
             DiagnosticLog.Write($"clipboard-write stage=set-start operation={operationId:N}");
-            WinClipboard.SetContent(package); RememberOwnSequence();
+            WinClipboard.SetContent(package);
             DiagnosticLog.Write($"clipboard-write stage=set-complete operation={operationId:N} sequence={NativeMethods.GetClipboardSequenceNumber()}");
         }
         catch (Exception ex)
@@ -84,10 +84,22 @@ internal sealed class ClipboardAdapter : IClipboardAdapter
             DiagnosticLog.Write($"clipboard-write stage=set-error operation={operationId:N} type={ex.GetType().Name} hresult=0x{ex.HResult:X8}");
             throw;
         }
+
+        var operationGuard = new ClipboardOperationGuard(owner + ":" + operationId.ToString("N"),
+            NativeMethods.GetClipboardSequenceNumber, async token =>
+            {
+                token.ThrowIfCancellationRequested();
+                var view = WinClipboard.GetContent();
+                return view.Contains(PrivateFormat) ? await view.GetDataAsync(PrivateFormat) as string : null;
+            });
         try
         {
             DiagnosticLog.Write($"clipboard-write stage=flush-start operation={operationId:N}");
-            WinClipboard.Flush(); RememberOwnSequence();
+            await ClipboardFlushRetry.FlushAsync(WinClipboard.Flush,
+                operationGuard.StillOwnedAsync,
+                Task.Delay, ct, (attempt, wait) => DiagnosticLog.Write($"clipboard-write stage=flush-busy operation={operationId:N} attempt={attempt} waitMs={wait}"));
+            // The private marker identifies a sequence created by Flush. Do not
+            // tag the current sequence blindly: another app may have copied meanwhile.
             DiagnosticLog.Write($"clipboard-write stage=flush-complete operation={operationId:N} sequence={NativeMethods.GetClipboardSequenceNumber()}");
         }
         catch (Exception ex)
@@ -95,12 +107,5 @@ internal sealed class ClipboardAdapter : IClipboardAdapter
             DiagnosticLog.Write($"clipboard-write stage=flush-error operation={operationId:N} type={ex.GetType().Name} hresult=0x{ex.HResult:X8} sequence={NativeMethods.GetClipboardSequenceNumber()}");
             throw;
         }
-    }
-    void RememberOwnSequence()
-    {
-        var sequence = NativeMethods.GetClipboardSequenceNumber();
-        if (!ownSequences.Add(sequence)) return;
-        ownSequenceOrder.Enqueue(sequence);
-        while (ownSequenceOrder.Count > 16) ownSequences.Remove(ownSequenceOrder.Dequeue());
     }
 }
