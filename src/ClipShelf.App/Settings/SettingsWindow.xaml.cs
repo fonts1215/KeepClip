@@ -11,6 +11,7 @@ internal sealed partial class SettingsWindow : Window
     public SettingsWindow(AppSettings settings, string dataPath, Func<AppSettings, Task<string?>> apply, Func<Task> recover)
     {
         InitializeComponent(); this.apply = apply; this.recover = recover;
+        AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "ClipShelf.ico"));
         Modifiers.SelectedIndex = settings.Hotkey.Modifiers switch { 3 => 1, 5 => 2, _ => 0 };
         Letter.Text = ((char)settings.Hotkey.Key).ToString(); Pause.IsOn = !settings.IsPaused;
         CopySelection.IsOn = settings.CopyOnSelection; CopySound.IsOn = settings.CopySound;

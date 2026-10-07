@@ -4,7 +4,7 @@ MVP personale per la cronologia degli appunti, scritto in C# / WinUI 3. Windows 
 
 ## Avvio rapido
 
-La versione aggiornata pronta all'uso è in `artifacts/publish-files-x64/ClipShelf.App.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. È autonoma e non richiede di installare .NET o Windows App Runtime separatamente.
+La versione aggiornata pronta all'uso è in `artifacts/publish-branding-x64/ClipShelf.App.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. È autonoma e non richiede di installare .NET o Windows App Runtime separatamente.
 
 Per usare la versione portabile ZIP, estrai tutti i file in una cartella stabile prima di avviare l'eseguibile. Non avviarlo direttamente dentro lo ZIP.
 
@@ -80,3 +80,10 @@ Diagnostica selezione v2: registra request, nome processo, fase SetContent/Flush
 Correzione appunti occupati: quando Flush restituisce 0x800401D0, vengono effettuati fino a tre ritentativi dopo 40, 100 e 200 ms. SetContent non viene ripetuto. Se la sequenza cambia, si verifica il token privato: il rendering della stessa copia non annulla il flush, mentre una nuova copia lo annulla per preservarla. Gli errori diversi e quelli persistenti restano visibili nel log. Prova manuale: ripeti la selezione che falliva in ChatGPT desktop e controlla card, suono e Ctrl+V; se copi altro durante l'attesa, deve essere mantenuta la copia più recente.
 
 File e cartelle: Ctrl+C in Esplora file crea una card per l'intera selezione (fino a 1000 elementi), con nomi, conteggio e app di provenienza. Si conservano i riferimenti agli originali, senza duplicarli nella cartella di ClipShelf: modifiche agli originali si riflettono nel successivo incolla. Spostamento, eliminazione o indisponibilità di uno degli originali bloccano l'intero incolla con un avviso; puoi ripristinare l'originale o eliminare la card. Preferiti, ricerca, persistenza e suono funzionano anche per i file. L'incolla pubblica file reali nei formati Windows, verso Esplora file o altre app che accettano file; è sempre una copia, anche per elementi acquisiti con Taglia. File virtuali senza percorso non sono supportati. Eliminare card o cronologia non elimina gli originali.
+
+
+## Icona dell'app
+
+Logo ufficiale: due fogli corallo e ambra con sfondo trasparente. Gli asset per eseguibile, finestre, area di notifica e MSIX sono inclusi nel progetto. Per rigenerarli dal master: `./scripts/Generate-AppIcons.ps1`. Vedi `branding/README.md` per dimensioni, provenienza e prompt.
+
+Verifica manuale: dopo aver chiuso la versione precedente, avvia `artifacts/publish-branding-x64/ClipShelf.App.exe` e controlla l'icona nell'area di notifica, nell'header della cronologia e nella barra del titolo delle impostazioni. In Esplora file verifica l'icona dell'eseguibile; prova anche un fattore di scala dello schermo diverso dal 100%.

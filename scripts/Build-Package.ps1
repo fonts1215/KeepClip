@@ -13,22 +13,10 @@ if (-not (Test-Path -LiteralPath (Join-Path $publishRoot 'ClipShelf.App.exe'))) 
 Copy-Item -LiteralPath (Join-Path $productRoot 'packaging/AppxManifest.xml') -Destination (Join-Path $publishRoot 'AppxManifest.xml')
 $assetRoot = Join-Path $publishRoot 'Assets'
 New-Item -ItemType Directory -Path $assetRoot -Force | Out-Null
-Add-Type -AssemblyName System.Drawing
-foreach ($logo in @(@('StoreLogo.png',50), @('Square44x44Logo.png',44), @('Square150x150Logo.png',150))) {
-    $size = [int]$logo[1]
-    $bitmap = [System.Drawing.Bitmap]::new($size,$size)
-    $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
-    $blue = [System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb(46,105,210))
-    $white = [System.Drawing.Pen]::new([System.Drawing.Color]::White,[single]($size * 0.055))
-    try {
-        $graphics.SmoothingMode = 'AntiAlias'
-        $graphics.FillRectangle($blue,0,0,$size,$size)
-        $graphics.DrawRectangle($white,[single]($size*.26),[single]($size*.25),[single]($size*.48),[single]($size*.57))
-        $graphics.DrawLine($white,[single]($size*.37),[single]($size*.17),[single]($size*.63),[single]($size*.17))
-        $graphics.DrawLine($white,[single]($size*.37),[single]($size*.47),[single]($size*.63),[single]($size*.47))
-        $graphics.DrawLine($white,[single]($size*.37),[single]($size*.62),[single]($size*.57),[single]($size*.62))
-        $bitmap.Save((Join-Path $assetRoot $logo[0]),[System.Drawing.Imaging.ImageFormat]::Png)
-    } finally { $white.Dispose(); $blue.Dispose(); $graphics.Dispose(); $bitmap.Dispose() }
+foreach ($asset in @('StoreLogo.png', 'Square44x44Logo.png', 'Square150x150Logo.png', 'ClipShelf.ico')) {
+    if (-not (Test-Path -LiteralPath (Join-Path $assetRoot $asset))) {
+        throw "Asset mancante nel publish: $asset. Genera gli asset con scripts/Generate-AppIcons.ps1 e ripeti il publish."
+    }
 }
 $sdkBinRoot = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits/10/bin'
 $sdk = Get-ChildItem -LiteralPath $sdkBinRoot -Directory | Where-Object { $_.Name -match '^10\.0\.\d+\.0$' -and (Test-Path -LiteralPath (Join-Path $_.FullName 'x64/makeappx.exe')) } | Sort-Object { [version]$_.Name } -Descending | Select-Object -First 1

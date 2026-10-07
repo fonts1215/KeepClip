@@ -5,13 +5,16 @@ internal sealed class TrayIconService : IDisposable
 {
     readonly MessageWindow window; readonly uint explorerRestart = NativeMethods.RegisterWindowMessage("TaskbarCreated");
     NativeMethods.NotifyIconData data;
+    readonly System.Drawing.Icon icon;
     public bool Paused { get; set; }
     public event Action? Open, TogglePause, Settings, Exit;
     public TrayIconService(MessageWindow window)
     {
         this.window = window;
+        var size = Math.Clamp((int)Math.Round(16 * NativeMethods.GetDpiForWindow(window.Handle) / 96d), 16, 256);
+        icon = new System.Drawing.Icon(Path.Combine(AppContext.BaseDirectory, "Assets", "ClipShelf.ico"), size, size);
         data = new() { Size = (uint)Marshal.SizeOf<NativeMethods.NotifyIconData>(), Window = window.Handle, Id = 1, Flags = 7, Callback = NativeMethods.WM_TRAY,
-            Icon = NativeMethods.LoadIcon(0, (nint)32512), Tip = "ClipShelf — cronologia appunti", Info = "", InfoTitle = "" };
+            Icon = icon.Handle, Tip = "ClipShelf — cronologia appunti", Info = "", InfoTitle = "" };
         window.Message += OnMessage;
     }
     public void Show() => NativeMethods.Shell_NotifyIcon(0, ref data);
@@ -39,5 +42,5 @@ internal sealed class TrayIconService : IDisposable
             finally { NativeMethods.DestroyMenu(menu); }
         }
     }
-    public void Dispose() { window.Message -= OnMessage; NativeMethods.Shell_NotifyIcon(2, ref data); }
+    public void Dispose() { window.Message -= OnMessage; NativeMethods.Shell_NotifyIcon(2, ref data); icon.Dispose(); }
 }
