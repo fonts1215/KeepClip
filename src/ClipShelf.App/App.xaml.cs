@@ -27,7 +27,7 @@ public partial class App : Application
         {
             try { dataPath = Windows.Storage.ApplicationData.Current.LocalFolder.Path; }
             catch { dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ClipShelf"); }
-            DiagnosticLog.DirectoryPath = dataPath; DiagnosticLog.Write("app-start");
+            DiagnosticLog.DirectoryPath = dataPath; DiagnosticLog.Write("app-start diagnostics=selection-v2");
             settingsStore = new(dataPath); string? startupError = null;
             try { settings = await settingsStore.LoadAsync(); } catch { startupError = "Impostazioni non leggibili. Sono stati usati i valori predefiniti."; }
             var repository = new SqliteHistoryRepository(dataPath); var images = new ImageStore(dataPath);

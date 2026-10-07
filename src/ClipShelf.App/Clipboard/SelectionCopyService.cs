@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 using ClipShelf.App.Interop;
 using ClipShelf.Core;
 using ClipShelf.Core.Selection;
@@ -57,7 +58,12 @@ internal sealed class SelectionCopyService(DispatcherQueue dispatcher, HistorySe
                         if ((drag || doubleClick || shift) && !modifiers && process != 0 && process != Environment.ProcessId && lifetime is not null)
                         {
                             var request = new Request(mouse.Point, down, window, downSequence, history.CaptureGeneration, ++version, lifetime.Token);
-                            dispatcher.TryEnqueue(() => { if (Current(request)) { pending = request; if (!reading) ReadPending(); } });
+                            dispatcher.TryEnqueue(() =>
+                            {
+                                if (!Current(request)) { DiagnosticLog.Write($"selection-discard request={request.Version} stage=queue reason={InvalidReason(request)}"); return; }
+                                DiagnosticLog.Write($"selection-gesture request={request.Version} gesture={(drag ? "drag" : doubleClick ? "double-click" : "shift-click")}");
+                                pending = request; if (!reading) ReadPending();
+                            });
                         }
                     }
                 }
@@ -68,6 +74,21 @@ internal sealed class SelectionCopyService(DispatcherQueue dispatcher, HistorySe
     }
     bool Current(Request request) => !request.Token.IsCancellationRequested && request.Version == version && enabled() &&
         !history.IsPaused && history.CaptureGeneration == request.Generation && NativeMethods.GetForegroundWindow() == request.Window;
+    string InvalidReason(Request request, bool checkClipboard = false)
+    {
+        if (request.Token.IsCancellationRequested) return "stopped";
+        if (request.Version != version) return "new-gesture";
+        if (!enabled()) return "disabled-or-not-ready";
+        if (history.IsPaused || history.CaptureGeneration != request.Generation) return "capture-state-changed";
+        if (NativeMethods.GetForegroundWindow() != request.Window) return "foreground-changed";
+        if (checkClipboard && NativeMethods.GetClipboardSequenceNumber() != request.Sequence) return "clipboard-changed";
+        return "none";
+    }
+    static string ProcessLabel(uint process)
+    {
+        try { using var app = Process.GetProcessById(checked((int)process)); return app.ProcessName.Replace((char)13, (char)95).Replace((char)10, (char)95); }
+        catch { return "unavailable"; }
+    }
     async void ReadPending()
     {
         reading = true;
@@ -79,26 +100,34 @@ internal sealed class SelectionCopyService(DispatcherQueue dispatcher, HistorySe
                 try
                 {
                     NativeMethods.GetWindowThreadProcessId(request.Window, out var process);
-                    var attempt = 0;
+                    DiagnosticLog.Write($"selection-begin request={request.Version} process={process} app={ProcessLabel(process)} sequence={request.Sequence}");
+                    var attempt = 0; var lastReason = "";
+                    bool CanRead()
+                    {
+                        var reason = InvalidReason(request, checkClipboard: true);
+                        if (reason != "none" && reason != lastReason) DiagnosticLog.Write($"selection-discard request={request.Version} stage=read reason={reason}");
+                        lastReason = reason; return reason == "none";
+                    }
                     var text = await SelectionReadRetry.ReadAsync(async token =>
                     {
                         attempt++;
-                        try { return await Task.Run(() => SelectedTextReader.Read(request.Point, request.Start, process), token); }
+                        try { return await Task.Run(() => SelectedTextReader.Read(request.Point, request.Start, process, detail => DiagnosticLog.Write($"selection-probe request={request.Version} attempt={attempt} {detail}")), token); }
                         catch (OperationCanceledException) { throw; }
-                        catch (Exception ex) { DiagnosticLog.Write($"selection-reader-unavailable attempt={attempt} type={ex.GetType().Name}"); return null; }
-                    }, () => Current(request) && NativeMethods.GetClipboardSequenceNumber() == request.Sequence,
+                        catch (Exception ex) { DiagnosticLog.Write($"selection-reader-unavailable request={request.Version} attempt={attempt} type={ex.GetType().Name} hresult=0x{ex.HResult:X8}"); return null; }
+                    }, CanRead,
                     (ms, token) => Task.Delay(ms, token), request.Token);
-                    DiagnosticLog.Write($"selection-read attempts={attempt} found={text is not null}");
-                    if (text is null || text.IsPassword || text.IsOwnApp || !Current(request) || NativeMethods.GetClipboardSequenceNumber() != request.Sequence) continue;
+                    DiagnosticLog.Write($"selection-read request={request.Version} attempts={attempt} found={text is not null} password={text?.IsPassword == true} own={text?.IsOwnApp == true}");
+                    if (text is null || text.IsPassword || text.IsOwnApp || !CanRead()) continue;
                     var origin = await SourceAppResolver.ResolveAsync(process);
-                    if (!Current(request) || NativeMethods.GetClipboardSequenceNumber() != request.Sequence) continue;
+                    if (!CanRead()) continue;
+                    DiagnosticLog.Write($"selection-copy-begin request={request.Version}");
                     var saved = await copy.CopyAsync(text with { Source = origin }, () => Current(request), request.Token);
-                    DiagnosticLog.Write($"selection-copy captured={saved}");
+                    DiagnosticLog.Write($"selection-copy request={request.Version} captured={saved} reason={InvalidReason(request)}");
                 }
-                catch (OperationCanceledException) { }
+                catch (OperationCanceledException) { DiagnosticLog.Write($"selection-discard request={request.Version} stage=cancel reason={InvalidReason(request)}"); }
                 catch (Exception ex)
                 {
-                    DiagnosticLog.Write($"selection-copy-error type={ex.GetType().Name}");
+                    DiagnosticLog.Write($"selection-copy-error request={request.Version} type={ex.GetType().Name} hresult=0x{ex.HResult:X8}");
                     Problem?.Invoke("Impossibile completare la copia alla selezione. Riprova con Ctrl+C.");
                 }
             }

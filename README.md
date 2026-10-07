@@ -4,7 +4,7 @@ MVP personale per la cronologia degli appunti, scritto in C# / WinUI 3. Windows 
 
 ## Avvio rapido
 
-La versione aggiornata pronta all'uso è in `artifacts/publish-header-x64/ClipShelf.App.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. È autonoma e non richiede di installare .NET o Windows App Runtime separatamente.
+La versione aggiornata pronta all'uso è in `artifacts/publish-diagnostics-x64/ClipShelf.App.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. È autonoma e non richiede di installare .NET o Windows App Runtime separatamente.
 
 Per usare la versione portabile ZIP, estrai tutti i file in una cartella stabile prima di avviare l'eseguibile. Non avviarlo direttamente dentro lo ZIP.
 
@@ -74,3 +74,5 @@ Windows può impedire l'incolla verso un processo elevato: l'elemento resta copi
 Le card mostrano nome e icona locale del programma proprietario degli appunti, quando Windows li rende disponibili. La provenienza viene salvata per testo e immagini, anche con la copia su selezione. Le vecchie voci mostrano Origine sconosciuta; ricopiando un contenuto si aggiorna la sua provenienza. Verifica manuale: copia da Blocco note e da un browser, controlla le card e riavvia ClipShelf per verificare che nome e icona restino presenti.
 
 Le card hanno un header con icona da 40 px e nome del programma, anteprima separata e data nel footer. Il suono opzionale è un chime morbido da 180 ms. La selezione usa il punto iniziale e finale del trascinamento, l'albero UIA completo e un fallback sul focus limitato allo stesso documento testuale; tre tentativi gestiscono la selezione tardiva, annullandosi se cambiano appunti, focus o gesto. Verifica manualmente trascinamento e doppio clic in ChatGPT e Teams desktop, anche terminando nel margine del messaggio. Se un controllo non espone la selezione a UI Automation, usa Ctrl+C: il log diagnostic.log contiene tentativi/esito senza testo.
+
+Diagnostica selezione v2: registra request, nome processo, fase SetContent/Flush con HRESULT, motivi di annullamento (nuovo gesto, focus, appunti, pausa), numero di provider TextPattern, selezione vuota/discontinua e processi non coincidenti. Non registra testo copiato, titoli delle finestre o contenuti chat. Per raccogliere evidenza, avvia questa versione e ripeti 2–3 selezioni in ChatGPT desktop, annotando una riuscita e una fallita. I log portable si trovano in %LOCALAPPDATA%/ClipShelf/diagnostic.log. Questa versione aggiunge diagnostica e non modifica la strategia di copia.

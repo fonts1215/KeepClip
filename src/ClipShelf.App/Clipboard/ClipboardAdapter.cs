@@ -72,7 +72,29 @@ internal sealed class ClipboardAdapter : IClipboardAdapter
             using (var writer = new DataWriter(stream.GetOutputStreamAt(0))) { writer.WriteBytes(content.Png); await writer.StoreAsync(); await writer.FlushAsync(); writer.DetachStream(); }
             stream.Seek(0); package.SetBitmap(RandomAccessStreamReference.CreateFromStream(stream));
         }
-        WinClipboard.SetContent(package); RememberOwnSequence(); WinClipboard.Flush(); RememberOwnSequence();
+        DiagnosticLog.Write($"clipboard-write begin operation={operationId:N} kind={content.Kind}");
+        try
+        {
+            DiagnosticLog.Write($"clipboard-write stage=set-start operation={operationId:N}");
+            WinClipboard.SetContent(package); RememberOwnSequence();
+            DiagnosticLog.Write($"clipboard-write stage=set-complete operation={operationId:N} sequence={NativeMethods.GetClipboardSequenceNumber()}");
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLog.Write($"clipboard-write stage=set-error operation={operationId:N} type={ex.GetType().Name} hresult=0x{ex.HResult:X8}");
+            throw;
+        }
+        try
+        {
+            DiagnosticLog.Write($"clipboard-write stage=flush-start operation={operationId:N}");
+            WinClipboard.Flush(); RememberOwnSequence();
+            DiagnosticLog.Write($"clipboard-write stage=flush-complete operation={operationId:N} sequence={NativeMethods.GetClipboardSequenceNumber()}");
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLog.Write($"clipboard-write stage=flush-error operation={operationId:N} type={ex.GetType().Name} hresult=0x{ex.HResult:X8} sequence={NativeMethods.GetClipboardSequenceNumber()}");
+            throw;
+        }
     }
     void RememberOwnSequence()
     {
