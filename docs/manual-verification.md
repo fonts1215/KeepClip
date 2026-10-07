@@ -50,3 +50,15 @@ Riporta numero del test, applicazione destinataria, passaggi e risultato. Se la 
 5. Elimina la card: gli originali devono restare intatti.
 6. Su un file di prova, usa Taglia, poi incolla dalla card di ClipShelf: deve essere copiato senza rimuovere l'originale.
 7. Ripeti una copia di testo e un'immagine per confermare i flussi precedenti.
+
+## Copia alla selezione: protezione dei campi di input
+
+Attiva la copia alla selezione e il suono nelle impostazioni. Queste prove manuali sono da eseguire dall'utente:
+
+1. Copia con Ctrl+C il testo `NUOVO TESTO`. In un dialog nel browser scrivi `vecchio`, selezionalo con trascinamento o doppio clic, aspetta almeno un secondo e premi Ctrl+V: il campo deve diventare `NUOVO TESTO`, senza card o suono al momento della selezione.
+2. Ripeti selezionando con Shift+clic, usando una textarea multilinea e un editor contenteditable. Ripeti in Blocco note e nel campo messaggio di Teams/ChatGPT: la selezione negli editor non deve alterare gli appunti.
+3. Seleziona invece testo leggibile di una pagina o di un messaggio ricevuto in ChatGPT/Teams: deve ancora essere copiato automaticamente e salvato. Ripeti dopo avere dato focus al campo messaggio, per controllare che la presenza di un editor nella stessa pagina non blocchi i messaggi.
+4. Seleziona testo in un campo e premi Ctrl+C: la copia manuale deve funzionare ed essere salvata normalmente.
+5. Ripeti la prova 1 con un'immagine o un file negli appunti: la selezione nel campo non deve sostituirli; incollali poi in una destinazione compatibile.
+
+Il log registra `uia-blocked reason=editing-control` oppure `editable-text-range` e `readOnly=False`, senza leggere o registrare il testo del campo bloccato. Quando lo stato non è disponibile, misto o la lettura genera un errore, la copia viene saltata (`unconfirmed-read-only`, `unknown-control` o `unknown-provider`, `readOnly=unknown`): gli appunti restano invariati e puoi usare Ctrl+C. La copia automatica richiede che il testo sia dichiarato non modificabile dal controllo; questa prova verifica anche eventuali limiti delle app destinatarie.

@@ -4,6 +4,19 @@ using ClipShelf.Core.Selection;
 namespace ClipShelf.Tests;
 public class SelectionCopyTests
 {
+    [Theory] [InlineData(false)] [InlineData(null)]
+    public async Task SelectingEditableOrUncertainTextPreservesPreviousClipboardAndHistory(bool? readOnly)
+    {
+        var clipboard = new Writer { Text = "Testo da incollare" }; var history = History(); var sounds = 0;
+        await history.CaptureAsync(new(new(ClipKind.Text, "Testo da incollare"), 9));
+        var previous = Assert.Single(history.Entries);
+        var copy = new SelectionCopyCoordinator(clipboard, history, () => true, () => 10, () => sounds++);
+
+        Assert.False(await copy.CopyAsync(new("Parola da sostituire", IsReadOnly: readOnly), () => true));
+
+        Assert.Equal("Testo da incollare", clipboard.Text); Assert.Equal(0, clipboard.Writes);
+        Assert.Equal(previous, Assert.Single(history.Entries)); Assert.Equal(0, sounds);
+    }
     [Theory]
     [InlineData("text", true, false, true, false)]
     [InlineData("text", false, true, true, false)]

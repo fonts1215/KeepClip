@@ -13,7 +13,7 @@ public static class SelectionReadRetry
             if (!current()) return null;
             var selection = await read(ct);
             if (!current()) return null;
-            if (selection is not null && (selection.IsPassword || selection.IsOwnApp || !string.IsNullOrWhiteSpace(selection.Text)))
+            if (selection is not null && (selection.IsPassword || selection.IsOwnApp || selection.IsReadOnly is not true || !string.IsNullOrWhiteSpace(selection.Text)))
                 return selection;
         }
         return null;

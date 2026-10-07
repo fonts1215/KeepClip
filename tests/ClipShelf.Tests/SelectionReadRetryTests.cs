@@ -2,6 +2,15 @@ using ClipShelf.Core.Selection;
 namespace ClipShelf.Tests;
 public sealed class SelectionReadRetryTests
 {
+    [Theory] [InlineData(false)] [InlineData(null)]
+    public async Task UnsafeFieldStopsRetryEvenWhenLaterReadWouldReturnText(bool? readOnly)
+    {
+        var attempts = 0;
+        var result = await SelectionReadRetry.ReadAsync(_ => Task.FromResult<SelectedText?>(
+            ++attempts == 1 ? new(null, IsReadOnly: readOnly) : new("Parola da sostituire")),
+            () => true, (_, _) => Task.CompletedTask);
+        Assert.NotNull(result); Assert.Equal(readOnly, result.IsReadOnly); Assert.Null(result.Text); Assert.Equal(1, attempts);
+    }
     [Fact] public async Task LateProviderSelectionIsRetried()
     {
         var attempts = 0; var waits = new List<int>();

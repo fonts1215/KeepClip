@@ -116,8 +116,8 @@ internal sealed class SelectionCopyService(DispatcherQueue dispatcher, HistorySe
                         catch (Exception ex) { DiagnosticLog.Write($"selection-reader-unavailable request={request.Version} attempt={attempt} type={ex.GetType().Name} hresult=0x{ex.HResult:X8}"); return null; }
                     }, CanRead,
                     (ms, token) => Task.Delay(ms, token), request.Token);
-                    DiagnosticLog.Write($"selection-read request={request.Version} attempts={attempt} found={text is not null} password={text?.IsPassword == true} own={text?.IsOwnApp == true}");
-                    if (text is null || text.IsPassword || text.IsOwnApp || !CanRead()) continue;
+                    DiagnosticLog.Write($"selection-read request={request.Version} attempts={attempt} found={text?.Text is not null} password={text?.IsPassword == true} own={text?.IsOwnApp == true} readOnly={text?.IsReadOnly?.ToString() ?? "unknown"}");
+                    if (text is null || text.IsPassword || text.IsOwnApp || text.IsReadOnly is not true || !CanRead()) continue;
                     var origin = await SourceAppResolver.ResolveAsync(process);
                     if (!CanRead()) continue;
                     DiagnosticLog.Write($"selection-copy-begin request={request.Version}");

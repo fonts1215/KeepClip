@@ -1,12 +1,12 @@
 using ClipShelf.Core.History;
 namespace ClipShelf.Core.Selection;
-public sealed record SelectedText(string? Text, bool IsPassword = false, bool IsOwnApp = false, ClipSource? Source = null);
+public sealed record SelectedText(string? Text, bool IsPassword = false, bool IsOwnApp = false, ClipSource? Source = null, bool? IsReadOnly = true);
 public sealed class SelectionCopyCoordinator(IClipboardAdapter clipboard, HistoryService history, Func<bool> enabled, Func<uint> sequence, Action copied, Action<string>? problem = null)
 {
     public const int MaxCharacters = 100_000;
     public async Task<bool> CopyAsync(SelectedText selection, Func<bool> isCurrent, CancellationToken ct = default)
     {
-        if (!enabled() || history.IsPaused || selection.IsPassword || selection.IsOwnApp ||
+        if (!enabled() || history.IsPaused || selection.IsPassword || selection.IsOwnApp || selection.IsReadOnly is not true ||
             string.IsNullOrWhiteSpace(selection.Text) || selection.Text.Length > MaxCharacters || !isCurrent()) return false;
         var generation = history.CaptureGeneration;
         var content = new ClipContent(ClipKind.Text, selection.Text);
