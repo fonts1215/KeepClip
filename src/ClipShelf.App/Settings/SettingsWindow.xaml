@@ -9,7 +9,7 @@
     <ToggleSwitch x:Name="CopySound" Header="Suono di conferma copia" OffContent="Disattivato" OnContent="Attivo"/>
     <ToggleSwitch x:Name="AutoStart" Header="Avvia all'accesso a Windows" OffContent="Disattivato" OnContent="Attivato"/>
     <TextBlock x:Name="StartupHint" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-    <TextBlock Text="La cronologia salva testo e immagini su questo dispositivo, fino a 200 elementi. I preferiti vengono conservati. Puoi sospendere la cattura quando copi dati sensibili." TextWrapping="Wrap"/>
+    <TextBlock Text="La cronologia salva testo, immagini e riferimenti a file e cartelle su questo dispositivo, fino a 200 elementi. I preferiti vengono conservati. Puoi sospendere la cattura quando copi dati sensibili." TextWrapping="Wrap"/>
     <InfoBar x:Name="Status" IsOpen="False" IsClosable="True" Severity="Informational"/>
     <TextBlock Text="Le modifiche si applicano premendo Salva impostazioni." TextWrapping="Wrap" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
     <Button x:Name="SaveButton" Content="Salva impostazioni" Style="{StaticResource AccentButtonStyle}" Click="Save_Click"/>

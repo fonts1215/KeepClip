@@ -13,10 +13,11 @@ public sealed partial class ClipCard : UserControl
         PreviewImage.Source = null; PreviewText.Text = ""; SourceIcon.Source = null; SourceFallback.Visibility = Visibility.Visible;
         KindLabel.Text = ""; TimeLabel.Text = ""; SourceName.Text = ""; PinLabel.Visibility = Visibility.Collapsed;
         if (DataContext is not ClipEntry entry) return;
-        KindLabel.Text = entry.Kind == ClipKind.Text ? "TESTO" : "IMMAGINE";
+        KindLabel.Text = entry.Kind switch { ClipKind.Text => "TESTO", ClipKind.Image => "IMMAGINE", ClipKind.Files => (entry.Files?.Count ?? 0) + " FILE", _ => "" };
         PinLabel.Visibility = entry.IsPinned ? Visibility.Visible : Visibility.Collapsed;
         TimeLabel.Text = entry.CopiedAt.ToLocalTime().ToString("dd MMM · HH:mm");
         PreviewText.Text = entry.Text is { Length: > 1200 } text ? text[..1200] : entry.Text ?? "";
+        if (entry.Kind == ClipKind.Files && entry.Files is { } files) PreviewText.Text = FileReferences.Display(files);
         SourceName.Text = entry.Source?.Name ?? "Origine sconosciuta";
         ToolTipService.SetToolTip(SourceName, SourceName.Text);
         if (entry.Source?.IconPng is { Length: > 0 } bytes)
@@ -30,6 +31,12 @@ public sealed partial class ClipCard : UserControl
                 SourceIcon.Source = icon; SourceFallback.Visibility = Visibility.Collapsed;
             }
             catch { }
+        }
+        if (!ReferenceEquals(DataContext, entry)) return;
+        if (entry.Kind == ClipKind.Files && entry.Files is { } references)
+        {
+            var available = await Task.Run(() => FileReferences.Available(references));
+            if (ReferenceEquals(DataContext, entry) && !available) PreviewText.Text = "Originali non disponibili" + Environment.NewLine + FileReferences.Display(references);
         }
         if (!ReferenceEquals(DataContext, entry)) return;
         if (entry.ImagePath is not null)

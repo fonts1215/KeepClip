@@ -2,6 +2,7 @@ using ClipShelf.Core;
 using ClipShelf.Core.History;
 using Microsoft.Data.Sqlite;
 using System.Globalization;
+using System.Text.Json;
 namespace ClipShelf.Storage;
 public sealed class SqliteHistoryRepository(string directory, IImageCleanup? imageCleanup = null) : IHistoryRepository
 {
@@ -24,7 +25,7 @@ public sealed class SqliteHistoryRepository(string directory, IImageCleanup? ima
                 while (reader.Read()) columns.Add(reader.GetString(1));
             }
             using var migration = connection.BeginTransaction();
-            foreach (var column in new[] { ("source_name", "TEXT"), ("source_icon", "BLOB") })
+            foreach (var column in new[] { ("source_name", "TEXT"), ("source_icon", "BLOB"), ("files", "TEXT") })
                 if (!columns.Contains(column.Item1))
                 {
                     using var alter = connection.CreateCommand(); alter.Transaction = migration;
@@ -43,13 +44,13 @@ public sealed class SqliteHistoryRepository(string directory, IImageCleanup? ima
             using var db = Open(); var entries = new List<ClipEntry>(); var missing = new List<string>();
             using (var command = db.CreateCommand())
             {
-                command.CommandText = "SELECT id,kind,hash,copied,pinned,text,image,size,source_name,source_icon FROM clips ORDER BY copied DESC";
+                command.CommandText = "SELECT id,kind,hash,copied,pinned,text,image,size,source_name,source_icon,files FROM clips ORDER BY copied DESC";
                 using var reader = command.ExecuteReader();
                 while (reader.Read())
                 {
-                    ct.ThrowIfCancellationRequested(); var kind = (ClipKind)reader.GetInt32(1); var path = reader.IsDBNull(6) ? null : reader.GetString(6);
+                    ct.ThrowIfCancellationRequested(); var files = reader.IsDBNull(10) ? null : JsonSerializer.Deserialize<ClipFile[]>(reader.GetString(10)); var kind = (ClipKind)reader.GetInt32(1); var path = reader.IsDBNull(6) ? null : reader.GetString(6);
                     if (kind == ClipKind.Image && (path is null || !IsOwnImage(path) || !File.Exists(path))) { missing.Add(reader.GetString(0)); continue; }
-                    entries.Add(new(Guid.Parse(reader.GetString(0)), kind, reader.GetString(2), DateTimeOffset.Parse(reader.GetString(3), CultureInfo.InvariantCulture), reader.GetBoolean(4), reader.IsDBNull(5) ? null : reader.GetString(5), path, reader.GetInt64(7), reader.IsDBNull(8) ? null : new ClipSource(reader.GetString(8), reader.IsDBNull(9) ? null : (byte[])reader.GetValue(9))));
+                    entries.Add(new(Guid.Parse(reader.GetString(0)), kind, reader.GetString(2), DateTimeOffset.Parse(reader.GetString(3), CultureInfo.InvariantCulture), reader.GetBoolean(4), reader.IsDBNull(5) ? null : reader.GetString(5), path, reader.GetInt64(7), reader.IsDBNull(8) ? null : new ClipSource(reader.GetString(8), reader.IsDBNull(9) ? null : (byte[])reader.GetValue(9)), files));
                 }
             }
             foreach (var id in missing) { using var remove = db.CreateCommand(); remove.CommandText = "DELETE FROM clips WHERE id=$id"; remove.Parameters.AddWithValue("$id", id); remove.ExecuteNonQuery(); }
@@ -68,13 +69,14 @@ public sealed class SqliteHistoryRepository(string directory, IImageCleanup? ima
             foreach (var entry in entries)
             {
                 ct.ThrowIfCancellationRequested(); using var insert = db.CreateCommand(); insert.Transaction = transaction;
-                insert.CommandText = "INSERT INTO clips (id,kind,hash,copied,pinned,text,image,size,source_name,source_icon) VALUES ($id,$kind,$hash,$copied,$pinned,$text,$image,$size,$source_name,$source_icon)";
+                insert.CommandText = "INSERT INTO clips (id,kind,hash,copied,pinned,text,image,size,source_name,source_icon,files) VALUES ($id,$kind,$hash,$copied,$pinned,$text,$image,$size,$source_name,$source_icon,$files)";
                 insert.Parameters.AddWithValue("$id", entry.Id.ToString()); insert.Parameters.AddWithValue("$kind", (int)entry.Kind);
                 insert.Parameters.AddWithValue("$hash", entry.Hash); insert.Parameters.AddWithValue("$copied", entry.CopiedAt.ToUniversalTime().ToString("O"));
                 insert.Parameters.AddWithValue("$pinned", entry.IsPinned); insert.Parameters.AddWithValue("$text", (object?)entry.Text ?? DBNull.Value);
                 insert.Parameters.AddWithValue("$image", (object?)entry.ImagePath ?? DBNull.Value); insert.Parameters.AddWithValue("$size", entry.SizeBytes);
                 insert.Parameters.AddWithValue("$source_name", (object?)entry.Source?.Name ?? DBNull.Value);
                 insert.Parameters.AddWithValue("$source_icon", (object?)entry.Source?.IconPng ?? DBNull.Value);
+                insert.Parameters.AddWithValue("$files", entry.Files is null ? DBNull.Value : (object)JsonSerializer.Serialize(entry.Files));
                 insert.ExecuteNonQuery();
             }
             transaction.Commit();

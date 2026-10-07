@@ -38,9 +38,14 @@ public sealed class HistoryService(IHistoryRepository repository, Func<Guid, byt
             byte[] bytes;
             if (content.Kind == ClipKind.Text && !string.IsNullOrEmpty(content.Text)) bytes = Encoding.UTF8.GetBytes(content.Text);
             else if (content.Kind == ClipKind.Image && content.Png is { Length: > 0 }) bytes = content.Png;
+            else if (content.Kind == ClipKind.Files)
+            {
+                if (!FileReferences.Valid(content.Files)) return new(false, "Selezione di file non valida: sono supportati fino a 1000 file o cartelle con percorso disponibile.");
+                bytes = FileReferences.Identity(content.Files!);
+            }
             else return new(false);
             var hash = Convert.ToHexString(SHA256.HashData(bytes)); var id = Guid.NewGuid();
-            var incoming = new ClipEntry(id, content.Kind, hash, DateTimeOffset.UtcNow, false, content.Kind == ClipKind.Text ? content.Text : null, null, bytes.LongLength, snapshot.Source);
+            var incoming = new ClipEntry(id, content.Kind, hash, DateTimeOffset.UtcNow, false, content.Kind == ClipKind.Text ? content.Text : null, null, bytes.LongLength, snapshot.Source, content.Kind == ClipKind.Files ? content.Files!.ToArray() : null);
             var decision = policy.Apply(Entries, incoming);
             if (decision.Rejection is not null) return new(false, decision.Rejection);
             var list = decision.Entries.ToArray();

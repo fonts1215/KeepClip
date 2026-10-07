@@ -4,7 +4,7 @@ MVP personale per la cronologia degli appunti, scritto in C# / WinUI 3. Windows 
 
 ## Avvio rapido
 
-La versione aggiornata pronta all'uso è in `artifacts/publish-flushfix-x64/ClipShelf.App.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. È autonoma e non richiede di installare .NET o Windows App Runtime separatamente.
+La versione aggiornata pronta all'uso è in `artifacts/publish-files-x64/ClipShelf.App.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. È autonoma e non richiede di installare .NET o Windows App Runtime separatamente.
 
 Per usare la versione portabile ZIP, estrai tutti i file in una cartella stabile prima di avviare l'eseguibile. Non avviarlo direttamente dentro lo ZIP.
 
@@ -16,14 +16,14 @@ Nelle impostazioni puoi abilitare **Copia alla selezione** e **Suono di conferma
 
 La copia alla selezione acquisisce testo al rilascio del mouse dopo un trascinamento, doppio clic o Shift+clic. Funziona nelle app che espongono il testo selezionato a Windows; esclude campi password e ClipShelf, e si sospende insieme alla cattura. Se l'app non è compatibile, usa Ctrl+C. Le selezioni multiple separate e quelle oltre 100.000 caratteri restano affidate alla copia manuale.
 
-Il suono dura circa 35 millisecondi e accompagna le copie salvate in cronologia, sia manuali sia automatiche. Le copie ignorate, i tentativi falliti e l'incollatura da ClipShelf non producono un suono di conferma.
+Il suono dura circa 180 millisecondi e accompagna le copie salvate in cronologia, sia manuali sia automatiche. Le copie ignorate, i tentativi falliti e l'incollatura da ClipShelf non producono un suono di conferma.
 
-- Copia testo o immagini con i normali comandi dell'app che stai usando.
+- Copia testo, immagini, file o cartelle con i normali comandi dell'app che stai usando.
 - Premi **Ctrl+Shift+V**: la cronologia compare vicino al bordo inferiore del monitor.
 - Fai doppio clic su una scheda o selezionala e premi **Invio**: ClipShelf torna alla finestra precedente e invia Ctrl+V.
 - **Esc** chiude il pannello senza incollare. La cattura continua in background.
 - Un clic seleziona la scheda. Usa i pulsanti in basso per incollare, fissare o eliminare la voce selezionata.
-- Cerca nel testo; il filtro **★ Preferiti** mostra solo gli elementi fissati. Non è previsto OCR delle immagini.
+- Cerca nel testo o nei nomi dei file; il filtro **★ Preferiti** mostra solo gli elementi fissati. Non è previsto OCR delle immagini.
 - **Svuota…** conserva i preferiti salvo scelta esplicita di includerli.
 
 ## Impostazioni
@@ -78,3 +78,5 @@ Le card hanno un header con icona da 40 px e nome del programma, anteprima separ
 Diagnostica selezione v2: registra request, nome processo, fase SetContent/Flush con HRESULT, motivi di annullamento (nuovo gesto, focus, appunti, pausa), numero di provider TextPattern, selezione vuota/discontinua e processi non coincidenti. Non registra testo copiato, titoli delle finestre o contenuti chat. Per raccogliere evidenza, avvia questa versione e ripeti 2–3 selezioni in ChatGPT desktop, annotando una riuscita e una fallita. I log portable si trovano in %LOCALAPPDATA%/ClipShelf/diagnostic.log. La precedente versione publish-diagnostics-x64 aggiungeva solo diagnostica; la versione attuale include la correzione descritta sotto.
 
 Correzione appunti occupati: quando Flush restituisce 0x800401D0, vengono effettuati fino a tre ritentativi dopo 40, 100 e 200 ms. SetContent non viene ripetuto. Se la sequenza cambia, si verifica il token privato: il rendering della stessa copia non annulla il flush, mentre una nuova copia lo annulla per preservarla. Gli errori diversi e quelli persistenti restano visibili nel log. Prova manuale: ripeti la selezione che falliva in ChatGPT desktop e controlla card, suono e Ctrl+V; se copi altro durante l'attesa, deve essere mantenuta la copia più recente.
+
+File e cartelle: Ctrl+C in Esplora file crea una card per l'intera selezione (fino a 1000 elementi), con nomi, conteggio e app di provenienza. Si conservano i riferimenti agli originali, senza duplicarli nella cartella di ClipShelf: modifiche agli originali si riflettono nel successivo incolla. Spostamento, eliminazione o indisponibilità di uno degli originali bloccano l'intero incolla con un avviso; puoi ripristinare l'originale o eliminare la card. Preferiti, ricerca, persistenza e suono funzionano anche per i file. L'incolla pubblica file reali nei formati Windows, verso Esplora file o altre app che accettano file; è sempre una copia, anche per elementi acquisiti con Taglia. File virtuali senza percorso non sono supportati. Eliminare card o cronologia non elimina gli originali.

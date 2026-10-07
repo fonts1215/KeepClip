@@ -103,6 +103,12 @@ public sealed partial class ShelfWindow : Window
         {
             ClipContent content;
             if (entry.Kind == ClipKind.Text) content = new(ClipKind.Text, entry.Text);
+            else if (entry.Kind == ClipKind.Files)
+            {
+                if (!FileReferences.Valid(entry.Files)) throw new IOException("Riferimenti ai file non validi.");
+                if (!await Task.Run(() => FileReferences.Available(entry.Files!))) { ShowMessage("Uno o più file originali non sono più disponibili. Ripristinali oppure rimuovi questa card."); return; }
+                content = new(ClipKind.Files, Files:entry.Files);
+            }
             else content = new(ClipKind.Image, Png: await File.ReadAllBytesAsync(entry.ImagePath ?? throw new IOException()));
             if (!session.IsCurrent(request)) return;
             continuation = request;

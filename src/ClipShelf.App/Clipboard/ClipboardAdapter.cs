@@ -4,6 +4,7 @@ using ClipShelf.Core.History;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Graphics.Imaging;
 using Windows.Storage.Streams;
+using Windows.Storage;
 using WinClipboard = Windows.ApplicationModel.DataTransfer.Clipboard;
 namespace ClipShelf.App.Clipboard;
 internal sealed class ClipboardAdapter : IClipboardAdapter
@@ -23,8 +24,16 @@ internal sealed class ClipboardAdapter : IClipboardAdapter
         ClipContent? content = null;
         // Delayed rendering can block GetClipboardData. Keep the native clipboard
         // transaction on one worker thread so the shelf and hotkey stay responsive.
-        var nativePng = await Task.Run(NativeClipboardImage.ReadPng, ct);
-        if (nativePng is not null)
+        var nativePng = view.Contains(StandardDataFormats.StorageItems) ? null : await Task.Run(NativeClipboardImage.ReadPng, ct);
+        if (view.Contains(StandardDataFormats.StorageItems))
+        {
+            var items = await view.GetStorageItemsAsync();
+            if (items.Count > FileReferences.MaxItems) throw new InvalidDataException("Puoi copiare fino a 1000 file o cartelle in una voce.");
+            var files = items.Select(item => new ClipFile(item.Path, item.IsOfType(StorageItemTypes.Folder))).ToArray();
+            if (!FileReferences.Valid(files)) throw new InvalidDataException("Sono supportati file e cartelle con un percorso disponibile sul dispositivo.");
+            content = new(ClipKind.Files, Files:files);
+        }
+        else if (nativePng is not null)
         {
             using var source = new InMemoryRandomAccessStream();
             using (var writer = new DataWriter(source.GetOutputStreamAt(0))) { writer.WriteBytes(nativePng); await writer.StoreAsync(); writer.DetachStream(); }
@@ -66,12 +75,35 @@ internal sealed class ClipboardAdapter : IClipboardAdapter
         package.SetData(PrivateFormat, owner + ":" + operationId.ToString("N"));
         using var stream = new InMemoryRandomAccessStream();
         if (content.Kind == ClipKind.Text) package.SetText(content.Text ?? "");
-        else
+        else if (content.Kind == ClipKind.Image)
         {
             if (content.Png is not { Length: > 0 }) throw new InvalidDataException("Immagine non disponibile.");
             using (var writer = new DataWriter(stream.GetOutputStreamAt(0))) { writer.WriteBytes(content.Png); await writer.StoreAsync(); await writer.FlushAsync(); writer.DetachStream(); }
             stream.Seek(0); package.SetBitmap(RandomAccessStreamReference.CreateFromStream(stream));
         }
+        else if (content.Kind == ClipKind.Files)
+        {
+            if (!FileReferences.Valid(content.Files)) throw new InvalidDataException("Selezione di file non valida.");
+            var items = new List<IStorageItem>();
+            foreach (var file in content.Files!)
+            {
+                ct.ThrowIfCancellationRequested();
+                try
+                {
+                    IStorageItem item = file.IsDirectory
+                        ? await StorageFolder.GetFolderFromPathAsync(file.Path)
+                        : await StorageFile.GetFileFromPathAsync(file.Path);
+                    items.Add(item);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    throw new IOException("Uno o più file originali non sono più disponibili o accessibili.", ex);
+                }
+            }
+            package.SetStorageItems(items, readOnly: false);
+        }
+        else throw new InvalidDataException("Tipo di contenuto non supportato.");
+        ct.ThrowIfCancellationRequested();
         DiagnosticLog.Write($"clipboard-write begin operation={operationId:N} kind={content.Kind}");
         try
         {
