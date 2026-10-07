@@ -13,7 +13,7 @@ public sealed class HistoryPolicy
         var duplicate = entries.FirstOrDefault(x => x.Hash == incoming.Hash && x.Kind == incoming.Kind);
         if (duplicate is not null)
         {
-            var moved = duplicate with { CopiedAt = incoming.CopiedAt };
+            var moved = duplicate with { CopiedAt = incoming.CopiedAt, Source = incoming.Source };
             return new(new[] { moved }.Concat(entries.Where(x => x.Id != duplicate.Id).OrderByDescending(x => x.CopiedAt)).ToArray(), [], null);
         }
         var result = entries.Append(incoming).OrderByDescending(x => x.CopiedAt).ToList();

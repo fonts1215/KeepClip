@@ -16,6 +16,7 @@ internal sealed class ClipboardAdapter : IClipboardAdapter
     {
         ct.ThrowIfCancellationRequested(); var sequence = NativeMethods.GetClipboardSequenceNumber();
         if (ownSequences.Contains(sequence)) return new(new(ClipKind.Text), sequence, true);
+        var sourceProcess = SourceAppResolver.ClipboardProcess();
         var view = WinClipboard.GetContent();
         if (view.Contains(PrivateFormat) && (await view.GetDataAsync(PrivateFormat)) is string token && token.StartsWith(owner + ":", StringComparison.Ordinal))
             return new(new(ClipKind.Text), sequence, true);
@@ -37,13 +38,15 @@ internal sealed class ClipboardAdapter : IClipboardAdapter
         }
         else if (view.Contains(StandardDataFormats.Text)) content = new(ClipKind.Text, await view.GetTextAsync());
         ct.ThrowIfCancellationRequested();
+        var origin = content is null ? null : await SourceAppResolver.ResolveAsync(sourceProcess);
+        ct.ThrowIfCancellationRequested();
         // A delayed producer can change the clipboard while its data is being materialized.
         if (content is not null && sequence != NativeMethods.GetClipboardSequenceNumber())
         {
             DiagnosticLog.Write("clipboard-sequence-changed-retry");
             throw new System.Runtime.InteropServices.COMException("Appunti cambiati durante la lettura.", unchecked((int)0x800401D0));
         }
-        return content is not null ? new(content, sequence) : null;
+        return content is not null ? new(content, sequence, Source: origin) : null;
     }
     static async Task<byte[]> NormalizeImageAsync(IRandomAccessStream source)
     {

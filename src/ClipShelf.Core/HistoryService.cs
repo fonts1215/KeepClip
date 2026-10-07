@@ -40,7 +40,7 @@ public sealed class HistoryService(IHistoryRepository repository, Func<Guid, byt
             else if (content.Kind == ClipKind.Image && content.Png is { Length: > 0 }) bytes = content.Png;
             else return new(false);
             var hash = Convert.ToHexString(SHA256.HashData(bytes)); var id = Guid.NewGuid();
-            var incoming = new ClipEntry(id, content.Kind, hash, DateTimeOffset.UtcNow, false, content.Kind == ClipKind.Text ? content.Text : null, null, bytes.LongLength);
+            var incoming = new ClipEntry(id, content.Kind, hash, DateTimeOffset.UtcNow, false, content.Kind == ClipKind.Text ? content.Text : null, null, bytes.LongLength, snapshot.Source);
             var decision = policy.Apply(Entries, incoming);
             if (decision.Rejection is not null) return new(false, decision.Rejection);
             var list = decision.Entries.ToArray();

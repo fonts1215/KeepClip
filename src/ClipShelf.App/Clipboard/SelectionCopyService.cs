@@ -86,7 +86,9 @@ internal sealed class SelectionCopyService(DispatcherQueue dispatcher, HistorySe
                     catch (OperationCanceledException) { throw; }
                     catch (Exception ex) { DiagnosticLog.Write($"selection-reader-unavailable type={ex.GetType().Name}"); continue; }
                     if (text is null || !Current(request) || NativeMethods.GetClipboardSequenceNumber() != request.Sequence) continue;
-                    var saved = await copy.CopyAsync(text, () => Current(request), request.Token);
+                    var origin = await SourceAppResolver.ResolveAsync(process);
+                    if (!Current(request) || NativeMethods.GetClipboardSequenceNumber() != request.Sequence) continue;
+                    var saved = await copy.CopyAsync(text with { Source = origin }, () => Current(request), request.Token);
                     DiagnosticLog.Write($"selection-copy captured={saved}");
                 }
                 catch (OperationCanceledException) { }

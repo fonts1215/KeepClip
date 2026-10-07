@@ -1,6 +1,6 @@
 using ClipShelf.Core.History;
 namespace ClipShelf.Core;
-public sealed record ClipboardSnapshot(ClipContent Content, uint Sequence, bool IsOwnWrite = false, long? CaptureGeneration = null);
+public sealed record ClipboardSnapshot(ClipContent Content, uint Sequence, bool IsOwnWrite = false, long? CaptureGeneration = null, ClipSource? Source = null);
 public interface IClipboardAdapter
 {
     Task<ClipboardSnapshot?> ReadAsync(CancellationToken ct = default);

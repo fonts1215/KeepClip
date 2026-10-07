@@ -1,6 +1,6 @@
 using ClipShelf.Core.History;
 namespace ClipShelf.Core.Selection;
-public sealed record SelectedText(string? Text, bool IsPassword = false, bool IsOwnApp = false);
+public sealed record SelectedText(string? Text, bool IsPassword = false, bool IsOwnApp = false, ClipSource? Source = null);
 public sealed class SelectionCopyCoordinator(IClipboardAdapter clipboard, HistoryService history, Func<bool> enabled, Func<uint> sequence, Action copied, Action<string>? problem = null)
 {
     public const int MaxCharacters = 100_000;
@@ -13,7 +13,7 @@ public sealed class SelectionCopyCoordinator(IClipboardAdapter clipboard, Histor
         await clipboard.WriteAsync(content, Guid.NewGuid(), ct);
         if (!enabled() || history.IsPaused || history.CaptureGeneration != generation || !isCurrent()) return false;
         CaptureResult result;
-        try { result = await history.CaptureAsync(new(content, sequence(), CaptureGeneration: generation), ct); }
+        try { result = await history.CaptureAsync(new(content, sequence(), CaptureGeneration: generation, Source: selection.Source), ct); }
         catch (OperationCanceledException) { throw; }
         catch (Exception) { problem?.Invoke("Il testo è stato copiato, ma non è stato possibile salvarlo nella cronologia."); return false; }
         if (result.Message is not null) problem?.Invoke(result.Message);

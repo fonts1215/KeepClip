@@ -9,7 +9,7 @@
     </Grid>
     <InfoBar x:Name="Status" Grid.Row="1" IsOpen="False" Severity="Informational" IsClosable="True"/>
     <Grid Grid.Row="2">
-      <GridView x:Name="Cards" Height="204" Padding="0" VerticalAlignment="Top" ItemsSource="{Binding Entries}" SelectedItem="{Binding SelectedEntry, Mode=TwoWay}" SelectionMode="Single" IsItemClickEnabled="True" ItemClick="Cards_ItemClick" DoubleTapped="Cards_DoubleTapped" ScrollViewer.HorizontalScrollMode="Enabled" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollMode="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled">
+      <GridView x:Name="Cards" Height="228" Padding="0" VerticalAlignment="Top" ItemsSource="{Binding Entries}" SelectedItem="{Binding SelectedEntry, Mode=TwoWay}" SelectionMode="Single" IsItemClickEnabled="True" ItemClick="Cards_ItemClick" DoubleTapped="Cards_DoubleTapped" ScrollViewer.HorizontalScrollMode="Enabled" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollMode="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled">
         <GridView.ItemContainerStyle><Style TargetType="GridViewItem"><Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="0,0,12,0"/><Setter Property="VerticalAlignment" Value="Top"/></Style></GridView.ItemContainerStyle>
         <GridView.ItemsPanel><ItemsPanelTemplate><ItemsWrapGrid Orientation="Vertical" MaximumRowsOrColumns="1"/></ItemsPanelTemplate></GridView.ItemsPanel>
         <GridView.ItemTemplate><DataTemplate><local:ClipCard/></DataTemplate></GridView.ItemTemplate>

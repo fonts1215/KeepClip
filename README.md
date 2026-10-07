@@ -4,7 +4,7 @@ MVP personale per la cronologia degli appunti, scritto in C# / WinUI 3. Windows 
 
 ## Avvio rapido
 
-La versione aggiornata pronta all'uso è in `artifacts/publish-selection-x64/ClipShelf.App.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. È autonoma e non richiede di installare .NET o Windows App Runtime separatamente.
+La versione aggiornata pronta all'uso è in `artifacts/publish-origin-x64/ClipShelf.App.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. È autonoma e non richiede di installare .NET o Windows App Runtime separatamente.
 
 Per usare la versione portabile ZIP, estrai tutti i file in una cartella stabile prima di avviare l'eseguibile. Non avviarlo direttamente dentro lo ZIP.
 
@@ -70,3 +70,5 @@ Output: `artifacts/ClipShelf-0.1.0-x64.msix`. L'Identity Publisher del manifest 
 Vedi `docs/manual-verification.md`. I test automatici verificano cronologia, persistenza, ricerca, controllo del destinatario e logica dell'avvio. Non certificano l'effettivo incolla in ogni app né l'accesso successivo a Windows.
 
 Windows può impedire l'incolla verso un processo elevato: l'elemento resta copiato e l'app propone Ctrl+V manuale. La destinazione deve accettare il tipo di contenuto scelto. L'accettazione di SendInput non dimostra che l'app esterna abbia incollato il contenuto.
+
+Le card mostrano nome e icona locale del programma proprietario degli appunti, quando Windows li rende disponibili. La provenienza viene salvata per testo e immagini, anche con la copia su selezione. Le vecchie voci mostrano Origine sconosciuta; ricopiando un contenuto si aggiorna la sua provenienza. Verifica manuale: copia da Blocco note e da un browser, controlla le card e riavvia ClipShelf per verificare che nome e icona restino presenti.
