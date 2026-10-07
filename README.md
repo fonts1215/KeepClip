@@ -4,7 +4,7 @@ MVP personale per la cronologia degli appunti, scritto in C# / WinUI 3. Windows 
 
 ## Avvio rapido
 
-La versione aggiornata pronta all'uso è in `artifacts/publish-current-x64/ClipShelf.App.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. È autonoma e non richiede di installare .NET o Windows App Runtime separatamente.
+La versione aggiornata pronta all'uso è in `artifacts/publish-layout-x64/ClipShelf.App.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. È autonoma e non richiede di installare .NET o Windows App Runtime separatamente.
 
 Per usare la versione portabile ZIP, estrai tutti i file in una cartella stabile prima di avviare l'eseguibile. Non avviarlo direttamente dentro lo ZIP.
 

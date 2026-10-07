@@ -19,6 +19,9 @@ public sealed partial class ShelfWindow : Window
     readonly OutsideClickWatcher outsideClicks;
     PasteRequest? continuation;
     bool busy, dialogOpen, exiting;
+    NativeMethods.Rect workArea;
+    double displayScale = 1;
+    int shelfWidth;
     public bool IsVisible { get; private set; }
     public event Action? SettingsRequested;
     public event Action<string>? Notification;
@@ -39,6 +42,8 @@ public sealed partial class ShelfWindow : Window
         history.HistoryChanged += OnHistoryChanged;
         model.PropertyChanged += (_, args) => { if (args.PropertyName == nameof(model.Entries)) UpdateCount(); };
         OnHistoryChanged();
+        Status.RegisterPropertyChangedCallback(InfoBar.IsOpenProperty, (_, _) => ResizeShelf());
+        Status.SizeChanged += (_, _) => ResizeShelf();
     }
     void OnHistoryChanged() => DispatcherQueue.TryEnqueue(() => { model.Refresh(history.Entries); UpdateCount(); });
     void UpdateCount()
@@ -59,11 +64,23 @@ public sealed partial class ShelfWindow : Window
             AppWindow.Move(new PointInt32(info.Work.Left + 16, info.Work.Top + 16));
             var dpi = NativeMethods.GetDpiForWindow(hwnd); var scale = (dpi == 0 ? 96 : dpi) / 96d;
             var w = Math.Min(info.Work.Right - info.Work.Left - 32, (int)(1200 * scale));
-            var h = Math.Min(info.Work.Bottom - info.Work.Top - 32, (int)(370 * scale));
-            AppWindow.MoveAndResize(new RectInt32(info.Work.Left + (info.Work.Right - info.Work.Left - w) / 2, info.Work.Bottom - h - 16, w, h));
+            workArea = info.Work; displayScale = scale; shelfWidth = w;
+            ResizeShelf();
             CountLabel.Visibility = w / scale < 1000 ? Visibility.Collapsed : Visibility.Visible;
         }
         IsVisible = true; outsideClicks.Start(); AppWindow.Show(); Activate(); Search.Focus(FocusState.Programmatic);
+    }
+    void ResizeShelf()
+    {
+        if (shelfWidth <= 0) return;
+        // Measure all rows at their required height. An open InfoBar must add
+        // window space rather than taking space away from the cards.
+        Root.InvalidateMeasure();
+        Root.Measure(new Windows.Foundation.Size(shelfWidth / displayScale, double.PositiveInfinity));
+        var height = Math.Min(workArea.Bottom - workArea.Top - 32, (int)Math.Ceiling((Root.DesiredSize.Height + 8) * displayScale));
+        var bounds = new RectInt32(workArea.Left + (workArea.Right - workArea.Left - shelfWidth) / 2, workArea.Bottom - height - 16, shelfWidth, height);
+        if (AppWindow.Size.Width != bounds.Width || AppWindow.Size.Height != bounds.Height || AppWindow.Position.Y != bounds.Y)
+            AppWindow.MoveAndResize(bounds);
     }
     public void Hide() { if (!IsVisible) return; session.Cancel(); IsVisible = false; outsideClicks.Stop(); AppWindow.Hide(); }
     public void ShowMessage(string message) { Status.Message = message; Status.IsOpen = true; }

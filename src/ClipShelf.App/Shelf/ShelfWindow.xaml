@@ -1,6 +1,6 @@
 <Window x:Class="ClipShelf.App.Shelf.ShelfWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="using:ClipShelf.App.Shelf" Title="ClipShelf">
   <Grid x:Name="Root" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Padding="24,18" RowSpacing="12" KeyDown="Root_KeyDown">
-    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
     <Grid ColumnSpacing="16"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
       <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center"><FontIcon Glyph="&#xE8C8;" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/><TextBlock Text="ClipShelf" FontSize="22" FontWeight="SemiBold"/></StackPanel>
       <TextBox x:Name="Search" Grid.Column="1" PlaceholderText="Cerca nella cronologia…" Text="{Binding Query, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" MaxWidth="480" HorizontalAlignment="Stretch"/>
@@ -9,7 +9,8 @@
     </Grid>
     <InfoBar x:Name="Status" Grid.Row="1" IsOpen="False" Severity="Informational" IsClosable="True"/>
     <Grid Grid.Row="2">
-      <GridView x:Name="Cards" ItemsSource="{Binding Entries}" SelectedItem="{Binding SelectedEntry, Mode=TwoWay}" SelectionMode="Single" IsItemClickEnabled="True" ItemClick="Cards_ItemClick" DoubleTapped="Cards_DoubleTapped" ScrollViewer.HorizontalScrollMode="Enabled" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollMode="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled">
+      <GridView x:Name="Cards" Height="204" Padding="0" VerticalAlignment="Top" ItemsSource="{Binding Entries}" SelectedItem="{Binding SelectedEntry, Mode=TwoWay}" SelectionMode="Single" IsItemClickEnabled="True" ItemClick="Cards_ItemClick" DoubleTapped="Cards_DoubleTapped" ScrollViewer.HorizontalScrollMode="Enabled" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollMode="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled">
+        <GridView.ItemContainerStyle><Style TargetType="GridViewItem"><Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="0,0,12,0"/><Setter Property="VerticalAlignment" Value="Top"/></Style></GridView.ItemContainerStyle>
         <GridView.ItemsPanel><ItemsPanelTemplate><ItemsWrapGrid Orientation="Vertical" MaximumRowsOrColumns="1"/></ItemsPanelTemplate></GridView.ItemsPanel>
         <GridView.ItemTemplate><DataTemplate><local:ClipCard/></DataTemplate></GridView.ItemTemplate>
       </GridView>
