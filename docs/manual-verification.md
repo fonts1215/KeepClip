@@ -16,7 +16,7 @@ Prima di cominciare: usa la build aggiornata, imposta Cattura degli appunti su *
 | Test | Azioni | Risultato atteso | Stato |
 |---|---|---|---|
 | 1 — Testo | Copia due testi da Blocco note; Ctrl+Shift+V | Due schede, ultima copia per prima | Da ripetere dopo correzione toggle |
-| 2 — Incolla | Cursore in Blocco note; scorciatoia; scegli una scheda | Pannello chiuso, testo inserito nel punto del cursore | Non verificato |
+| 2 — Incolla | Cursore in Blocco note; Ctrl+Shift+V; un clic sulla scheda, poi doppio clic | Un clic seleziona senza chiudere; il doppio clic chiude e inserisce il testo nel punto del cursore | Da riprovare dopo correzione focus |
 | 3 — Duplicati | Ricopia uno dei testi | Stessa voce in cima, nessun duplicato | Automatico; desktop non verificato |
 | 4 — Ricerca | Cerca una parola presente in una scheda | Solo le corrispondenze | Automatico; desktop non verificato |
 | 5 — Preferiti | Seleziona con frecce, ★ Preferito; filtro preferiti | Solo le voci fissate | Automatico; desktop non verificato |

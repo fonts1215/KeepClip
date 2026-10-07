@@ -16,6 +16,7 @@ public sealed partial class ShelfWindow : Window
     readonly HistoryService history; readonly ShelfViewModel model = new();
     readonly PasteCoordinator paste;
     readonly PasteSession session = new();
+    PasteRequest? continuation;
     bool busy, dialogOpen, exiting;
     public bool IsVisible { get; private set; }
     public event Action? SettingsRequested;
@@ -23,7 +24,7 @@ public sealed partial class ShelfWindow : Window
     public ShelfWindow(HistoryService history, IClipboardAdapter clipboard)
     {
         InitializeComponent(); this.history = history; Root.DataContext = model;
-        paste = new(clipboard, new WindowTarget(), new PasteInput(), Hide);
+        paste = new(clipboard, new WindowTarget(), new PasteInput(), () => { Hide(); continuation = session.Snapshot(); });
         var presenter = (OverlappedPresenter)AppWindow.Presenter;
         presenter.SetBorderAndTitleBar(true, false); presenter.IsResizable = false; presenter.IsMaximizable = false; presenter.IsMinimizable = false; presenter.IsAlwaysOnTop = true;
         AppWindow.IsShownInSwitchers = false;
@@ -58,11 +59,18 @@ public sealed partial class ShelfWindow : Window
         }
         IsVisible = true; AppWindow.Show(); Activate(); Search.Focus(FocusState.Programmatic);
     }
-    public void Hide() { session.Cancel(); IsVisible = false; AppWindow.Hide(); }
+    public void Hide() { if (!IsVisible) return; session.Cancel(); IsVisible = false; AppWindow.Hide(); }
     public void ShowMessage(string message) { Status.Message = message; Status.IsOpen = true; }
     public void ExitWindow() { exiting = true; history.HistoryChanged -= OnHistoryChanged; Close(); }
     void Settings_Click(object sender, RoutedEventArgs e) { Hide(); SettingsRequested?.Invoke(); }
-    async void Cards_ItemClick(object sender, ItemClickEventArgs e) { if (e.ClickedItem is ClipEntry entry) await PasteAsync(entry); }
+    void Cards_ItemClick(object sender, ItemClickEventArgs e) { if (e.ClickedItem is ClipEntry entry) model.SelectedEntry = entry; }
+    async void Cards_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
+    {
+        if (e.OriginalSource is FrameworkElement { DataContext: ClipEntry entry })
+        {
+            e.Handled = true; model.SelectedEntry = entry; await PasteAsync(entry);
+        }
+    }
     async void Paste_Click(object sender, RoutedEventArgs e) { if (model.SelectedEntry is { } entry) await PasteAsync(entry); }
     async Task PasteAsync(ClipEntry entry)
     {
@@ -74,11 +82,13 @@ public sealed partial class ShelfWindow : Window
             if (entry.Kind == ClipKind.Text) content = new(ClipKind.Text, entry.Text);
             else content = new(ClipKind.Image, Png: await File.ReadAllBytesAsync(entry.ImagePath ?? throw new IOException()));
             if (!session.IsCurrent(request)) return;
-            var result = await paste.PasteAsync(content, request.Destination);
+            continuation = request;
+            var result = await paste.PasteAsync(content, request.Destination, canContinue: () => continuation is { } current && session.IsCurrent(current));
+            DiagnosticLog.Write($"paste outcome={result.Outcome} failure={result.Failure}");
             if (result.Message is not null) Notification?.Invoke(result.Message);
         }
         catch (Exception) { ShowMessage("Impossibile copiare questo elemento. Verifica che il contenuto sia ancora disponibile."); Notification?.Invoke("Impossibile copiare l'elemento selezionato."); }
-        finally { busy = false; }
+        finally { continuation = null; busy = false; }
     }
     async Task MutateAsync(Func<Task> action)
     {

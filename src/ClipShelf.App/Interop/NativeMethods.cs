@@ -37,7 +37,14 @@ internal static class NativeMethods
     [DllImport("user32.dll", SetLastError = true)] internal static extern bool RegisterHotKey(nint hwnd, int id, uint modifiers, uint key);
     [DllImport("user32.dll")] internal static extern bool UnregisterHotKey(nint hwnd, int id);
     [DllImport("user32.dll")] internal static extern nint GetForegroundWindow();
+    internal delegate void WinEventProc(nint hook, uint eventId, nint hwnd, int objectId, int childId, uint thread, uint time);
+    [DllImport("user32.dll")] internal static extern nint SetWinEventHook(uint first, uint last, nint module, WinEventProc callback, uint process, uint thread, uint flags);
+    [DllImport("user32.dll")] internal static extern bool UnhookWinEvent(nint hook);
+    [DllImport("user32.dll")] internal static extern nint GetShellWindow();
+    [DllImport("user32.dll")] internal static extern nint GetDesktopWindow();
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] internal static extern int GetClassName(nint hwnd, System.Text.StringBuilder name, int length);
     [DllImport("user32.dll")] internal static extern bool SetForegroundWindow(nint hwnd);
+    [DllImport("user32.dll", SetLastError = true)] internal static extern nint SendMessageTimeout(nint hwnd, uint message, nuint wParam, nint lParam, uint flags, uint timeout, out nuint result);
     [DllImport("user32.dll")] internal static extern bool IsWindow(nint hwnd);
     [DllImport("user32.dll")] internal static extern bool IsIconic(nint hwnd);
     [DllImport("user32.dll")] internal static extern bool ShowWindow(nint hwnd, int command);

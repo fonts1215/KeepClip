@@ -4,7 +4,7 @@ MVP personale per la cronologia degli appunti, scritto in C# / WinUI 3. Windows 
 
 ## Avvio rapido
 
-La versione pronta all'uso è in `artifacts/publish-x64/ClipShelf.App.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. È autonoma e non richiede di installare .NET o Windows App Runtime separatamente.
+La versione aggiornata pronta all'uso è in `artifacts/publish-update-x64/ClipShelf.App.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. È autonoma e non richiede di installare .NET o Windows App Runtime separatamente.
 
 Per usare la versione portabile ZIP, estrai tutti i file in una cartella stabile prima di avviare l'eseguibile. Non avviarlo direttamente dentro lo ZIP.
 
@@ -14,9 +14,9 @@ Se una versione precedente è già nell'area di notifica, scegli **Esci** nel su
 
 - Copia testo o immagini con i normali comandi dell'app che stai usando.
 - Premi **Ctrl+Shift+V**: la cronologia compare vicino al bordo inferiore del monitor.
-- Fai clic su una scheda o selezionala con le frecce e premi **Invio**: ClipShelf torna alla finestra precedente e invia Ctrl+V.
+- Fai doppio clic su una scheda o selezionala e premi **Invio**: ClipShelf torna alla finestra precedente e invia Ctrl+V.
 - **Esc** chiude il pannello senza incollare. La cattura continua in background.
-- Per fissare o eliminare una voce, selezionala con la tastiera e usa i pulsanti in basso. Il clic sulla scheda incolla direttamente.
+- Un clic seleziona la scheda. Usa i pulsanti in basso per incollare, fissare o eliminare la voce selezionata.
 - Cerca nel testo; il filtro **★ Preferiti** mostra solo gli elementi fissati. Non è previsto OCR delle immagini.
 - **Svuota…** conserva i preferiti salvo scelta esplicita di includerli.
 

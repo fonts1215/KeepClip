@@ -1,8 +1,9 @@
-param([switch]$SkipBuild, [string]$CertificateThumbprint)
+param([switch]$SkipBuild, [string]$CertificateThumbprint, [string]$PublishDirectory)
 $ErrorActionPreference = 'Stop'
 $productRoot = Split-Path -Parent $PSScriptRoot
 $artifactRoot = Join-Path $productRoot 'artifacts'
 $publishRoot = Join-Path $artifactRoot 'publish-x64'
+if ($PublishDirectory) { $publishRoot = [System.IO.Path]::GetFullPath($PublishDirectory) }
 New-Item -ItemType Directory -Path $publishRoot -Force | Out-Null
 if (-not $SkipBuild) {
     & dotnet publish (Join-Path $productRoot 'src/ClipShelf.App/ClipShelf.App.csproj') -c Release -p:Platform=x64 -o $publishRoot --verbosity minimal

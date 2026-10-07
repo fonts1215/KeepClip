@@ -14,6 +14,7 @@ public partial class App : Application
     ShelfWindow? shelf; SettingsWindow? settingsWindow; HistoryService? history;
     AppSettings settings = AppSettings.Default;
     SettingsStore? settingsStore;
+    ForegroundTracker? foreground;
     string dataPath = "";
     bool storageReady, shuttingDown;
     public App() { InitializeComponent(); UnhandledException += (_, e) => { e.Handled = true; Notify("Si è verificato un errore. Se persiste, riavvia ClipShelf."); }; }
@@ -29,6 +30,7 @@ public partial class App : Application
             try { settings = await settingsStore.LoadAsync(); } catch { startupError = "Impostazioni non leggibili. Sono stati usati i valori predefiniti."; }
             var repository = new SqliteHistoryRepository(dataPath); var images = new ImageStore(dataPath);
             history = new(repository, images.SaveAsync); history.SetPaused(settings.IsPaused);
+            foreground = new();
             var clipboard = new ClipboardAdapter(); shelf = new(history, clipboard);
             messages = new(); hotkey = new(messages); tray = new(messages) { Paused = settings.IsPaused };
             tray.Open += OpenShelf; tray.Settings += OpenSettings; tray.TogglePause += TogglePause; tray.Exit += Shutdown;
@@ -56,7 +58,7 @@ public partial class App : Application
     {
         if (shelf is null) return;
         if (shelf.IsVisible) { shelf.Hide(); return; }
-        shelf.ShowFor(new WindowTarget().Capture());
+        shelf.ShowFor(foreground?.Capture() ?? new WindowTarget().Capture());
     }
     void OpenSettings()
     {
@@ -100,6 +102,6 @@ public partial class App : Application
     void Shutdown()
     {
         if (shuttingDown) return; shuttingDown = true;
-        monitor?.Dispose(); hotkey?.Dispose(); tray?.Dispose(); messages?.Dispose(); settingsWindow?.Close(); shelf?.ExitWindow(); instance.Dispose(); Exit();
+        foreground?.Dispose(); monitor?.Dispose(); hotkey?.Dispose(); tray?.Dispose(); messages?.Dispose(); settingsWindow?.Close(); shelf?.ExitWindow(); instance.Dispose(); Exit();
     }
 }
