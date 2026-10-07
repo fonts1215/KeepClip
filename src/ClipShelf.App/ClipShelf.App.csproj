@@ -16,6 +16,8 @@
     <PublishTrimmed>false</PublishTrimmed>
   </PropertyGroup>
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.WindowsDesktop.App.WPF"/>
+    <Content Update="Assets/Copy.wav" CopyToOutputDirectory="PreserveNewest"/>
     <ProjectReference Include="../ClipShelf.Core/ClipShelf.Core.csproj"/>
     <ProjectReference Include="../ClipShelf.Storage/ClipShelf.Storage.csproj"/>
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.5.1"/>

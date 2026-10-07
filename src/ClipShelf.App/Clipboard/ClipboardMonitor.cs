@@ -8,6 +8,7 @@ internal sealed class ClipboardMonitor : IDisposable
     readonly CancellationTokenSource lifetime = new();
     bool reading, pending;
     public event Action<string>? Problem;
+    public event Action? Copied;
     public ClipboardMonitor(MessageWindow window, IClipboardAdapter adapter, HistoryService history)
     {
         this.window = window; this.adapter = adapter; this.history = history;
@@ -39,6 +40,7 @@ internal sealed class ClipboardMonitor : IDisposable
                     {
                         var result = await history.CaptureAsync(snapshot with { CaptureGeneration = generation }, lifetime.Token);
                         DiagnosticLog.Write($"capture completed={result.Captured} own={snapshot.IsOwnWrite} count={history.Entries.Count}");
+                        if (result.Captured) Copied?.Invoke();
                         if (result.Message is not null) Problem?.Invoke(result.Message);
                     }
                     else DiagnosticLog.Write("clipboard-unsupported-or-empty");

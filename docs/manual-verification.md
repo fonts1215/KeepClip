@@ -3,7 +3,7 @@
 ## Evidenza raccolta
 
 - Primo build WinUI 3 Release x64: 0 errori, 0 avvisi.
-- Verifica automatica aggiornata: **44/44 test superati**, inclusi recupero di database corrotto, backup fallito, pulizia dopo commit, generazione della cattura, sessione incolla, layout Win32 x64 e logica dell'avvio portabile.
+- Verifica automatica aggiornata: **58/58 test superati**, inclusi recupero di database corrotto, backup fallito, pulizia dopo commit, generazione della cattura, sessione incolla, layout Win32 x64, selezioni consentite/escluse, avvisi di salvataggio e compatibilità delle impostazioni precedenti.
 - Prima generazione MSIX: riuscita, non firmata.
 - Applicazione avviata; l'utente ha mostrato le impostazioni in esecuzione.
 - Test 1 dell'utente: schede assenti. Diagnosi confermata dal file di impostazioni: `IsPaused=true`. Corretto il toggle ambiguo (ora acceso = cattura attiva). Ripetizione del test dopo abilitazione ancora da confermare.
@@ -36,5 +36,8 @@ Prima di cominciare: usa la build aggiornata, imposta Cattura degli appunti su *
 | 17 — Clic fuori | Ctrl+Shift+V; clic su un'altra app senza prima cliccare il pannello | Chiusura al primo clic esterno | Prova desktop superata; caso intermittente da confermare nell'uso quotidiano |
 | 18 — Strumento di cattura | Cattura attiva; premi Copia nella toolbar | Scheda immagine con anteprima nella cronologia | Lettura PNG nativa superata; aggiunta alla lista da riprovare |
 | 19 — Spazi card | Apri con avviso di pausa visibile; chiudi l'avviso e riapri | Card intera con data leggibile; altezza pannello adattata senza tagli | Build riuscita; verifica visiva affidata all'utente |
+| 20 — Copia alla selezione | Cattura attiva; abilita la nuova opzione e salva; seleziona testo in Blocco note senza Ctrl+C, poi apri il pannello | Nuova voce con il testo selezionato; anche Ctrl+V in un documento di prova usa quel testo | Logica automatica superata; compatibilità desktop affidata all'utente |
+| 21 — Suono | Abilita suono e salva; copia con Ctrl+C e con selezione; disabilita suono e salva | Un suono breve per copia acquisita; nessun suono con opzione disattivata | Risorsa audio inclusa; ascolto affidato all'utente |
+| 22 — Esclusioni selezione | Seleziona nella ricerca ClipShelf; pausa cattura e seleziona in Blocco note | Nessuna copia automatica; cronologia invariata | Logica automatica superata; desktop affidato all'utente |
 
 Riporta numero del test, applicazione destinataria, passaggi e risultato. Se la cattura attiva fallisce, controlla l'eventuale avviso e il log locale `diagnostic.log`, che non contiene i dati copiati.

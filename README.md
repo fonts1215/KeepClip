@@ -4,13 +4,19 @@ MVP personale per la cronologia degli appunti, scritto in C# / WinUI 3. Windows 
 
 ## Avvio rapido
 
-La versione aggiornata pronta all'uso è in `artifacts/publish-layout-x64/ClipShelf.App.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. È autonoma e non richiede di installare .NET o Windows App Runtime separatamente.
+La versione aggiornata pronta all'uso è in `artifacts/publish-selection-x64/ClipShelf.App.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. È autonoma e non richiede di installare .NET o Windows App Runtime separatamente.
 
 Per usare la versione portabile ZIP, estrai tutti i file in una cartella stabile prima di avviare l'eseguibile. Non avviarlo direttamente dentro lo ZIP.
 
 Se una versione precedente è già nell'area di notifica, scegli **Esci** nel suo menu prima di aprire quella nuova. L'app permette una sola istanza per sessione Windows.
 
 ## Uso
+
+Nelle impostazioni puoi abilitare **Copia alla selezione** e **Suono di conferma copia**, poi premere **Salva impostazioni**. Entrambe le opzioni sono inizialmente disattivate, anche aggiornando una configurazione precedente.
+
+La copia alla selezione acquisisce testo al rilascio del mouse dopo un trascinamento, doppio clic o Shift+clic. Funziona nelle app che espongono il testo selezionato a Windows; esclude campi password e ClipShelf, e si sospende insieme alla cattura. Se l'app non è compatibile, usa Ctrl+C. Le selezioni multiple separate e quelle oltre 100.000 caratteri restano affidate alla copia manuale.
+
+Il suono dura circa 35 millisecondi e accompagna le copie salvate in cronologia, sia manuali sia automatiche. Le copie ignorate, i tentativi falliti e l'incollatura da ClipShelf non producono un suono di conferma.
 
 - Copia testo o immagini con i normali comandi dell'app che stai usando.
 - Premi **Ctrl+Shift+V**: la cronologia compare vicino al bordo inferiore del monitor.

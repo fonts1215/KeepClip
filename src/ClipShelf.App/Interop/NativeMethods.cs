@@ -64,6 +64,7 @@ internal static class NativeMethods
     [DllImport("user32.dll")] internal static extern bool ShowWindow(nint hwnd, int command);
     [DllImport("user32.dll")] internal static extern uint GetWindowThreadProcessId(nint hwnd, out uint processId);
     [DllImport("user32.dll")] internal static extern short GetAsyncKeyState(int key);
+    [DllImport("user32.dll")] internal static extern uint GetDoubleClickTime();
     [DllImport("user32.dll", SetLastError = true)] internal static extern uint SendInput(uint count, Input[] inputs, int size);
     [DllImport("user32.dll")] internal static extern nint MonitorFromWindow(nint hwnd, uint flags);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] internal static extern bool GetMonitorInfo(nint monitor, ref MonitorInfo info);

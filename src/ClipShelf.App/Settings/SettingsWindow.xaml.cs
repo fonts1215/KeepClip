@@ -13,6 +13,7 @@ internal sealed partial class SettingsWindow : Window
         InitializeComponent(); this.apply = apply; this.recover = recover;
         Modifiers.SelectedIndex = settings.Hotkey.Modifiers switch { 3 => 1, 5 => 2, _ => 0 };
         Letter.Text = ((char)settings.Hotkey.Key).ToString(); Pause.IsOn = !settings.IsPaused;
+        CopySelection.IsOn = settings.CopyOnSelection; CopySound.IsOn = settings.CopySound;
         DataPathLabel.Text = "Dati locali: " + dataPath;
         AppWindow.Resize(new SizeInt32(600, 690)); ((OverlappedPresenter)AppWindow.Presenter).IsMaximizable = false;
         Root.Loaded += async (_, _) => await RefreshStartupAsync();
@@ -24,7 +25,7 @@ internal sealed partial class SettingsWindow : Window
         SaveButton.IsEnabled = false;
         try
         {
-            var settings = new AppSettings(new Hotkey(Modifiers.SelectedIndex switch { 1 => 3u, 2 => 5u, _ => 6u }, key[0]), !Pause.IsOn, AutoStart.IsOn);
+            var settings = new AppSettings(new Hotkey(Modifiers.SelectedIndex switch { 1 => 3u, 2 => 5u, _ => 6u }, key[0]), !Pause.IsOn, AutoStart.IsOn, CopySelection.IsOn, CopySound.IsOn);
             Show(await apply(settings) ?? "Impostazioni salvate."); await RefreshStartupAsync();
         }
         catch { Show("Impossibile salvare le impostazioni."); }

@@ -10,9 +10,13 @@ internal sealed class ClipboardAdapter : IClipboardAdapter
 {
     const string PrivateFormat = "ClipShelf.Owner.v1";
     readonly string owner = Guid.NewGuid().ToString("N");
+    readonly HashSet<uint> ownSequences = [];
+    readonly Queue<uint> ownSequenceOrder = new();
     public async Task<ClipboardSnapshot?> ReadAsync(CancellationToken ct = default)
     {
-        ct.ThrowIfCancellationRequested(); var sequence = NativeMethods.GetClipboardSequenceNumber(); var view = WinClipboard.GetContent();
+        ct.ThrowIfCancellationRequested(); var sequence = NativeMethods.GetClipboardSequenceNumber();
+        if (ownSequences.Contains(sequence)) return new(new(ClipKind.Text), sequence, true);
+        var view = WinClipboard.GetContent();
         if (view.Contains(PrivateFormat) && (await view.GetDataAsync(PrivateFormat)) is string token && token.StartsWith(owner + ":", StringComparison.Ordinal))
             return new(new(ClipKind.Text), sequence, true);
         ClipContent? content = null;
@@ -65,6 +69,13 @@ internal sealed class ClipboardAdapter : IClipboardAdapter
             using (var writer = new DataWriter(stream.GetOutputStreamAt(0))) { writer.WriteBytes(content.Png); await writer.StoreAsync(); await writer.FlushAsync(); writer.DetachStream(); }
             stream.Seek(0); package.SetBitmap(RandomAccessStreamReference.CreateFromStream(stream));
         }
-        WinClipboard.SetContent(package); WinClipboard.Flush();
+        WinClipboard.SetContent(package); RememberOwnSequence(); WinClipboard.Flush(); RememberOwnSequence();
+    }
+    void RememberOwnSequence()
+    {
+        var sequence = NativeMethods.GetClipboardSequenceNumber();
+        if (!ownSequences.Add(sequence)) return;
+        ownSequenceOrder.Enqueue(sequence);
+        while (ownSequenceOrder.Count > 16) ownSequences.Remove(ownSequenceOrder.Dequeue());
     }
 }

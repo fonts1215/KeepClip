@@ -4,6 +4,7 @@ using ClipShelf.App.Interop;
 using ClipShelf.App.Settings;
 using ClipShelf.App.Shelf;
 using ClipShelf.Core;
+using ClipShelf.Core.Selection;
 using ClipShelf.Storage;
 using Microsoft.UI.Xaml;
 namespace ClipShelf.App;
@@ -15,6 +16,7 @@ public partial class App : Application
     AppSettings settings = AppSettings.Default;
     SettingsStore? settingsStore;
     ForegroundTracker? foreground;
+    SelectionCopyService? selectionCopy;
     string dataPath = "";
     bool storageReady, shuttingDown;
     public App() { InitializeComponent(); UnhandledException += (_, e) => { e.Handled = true; Notify("Si è verificato un errore. Se persiste, riavvia ClipShelf."); }; }
@@ -38,7 +40,11 @@ public partial class App : Application
             if (!hotkey.TryRegister(settings.Hotkey)) startupError = "Scorciatoia occupata. Apri le impostazioni dall'icona e scegli un'altra combinazione.";
             try { await history.InitializeAsync(); storageReady = true; }
             catch (Exception ex) { startupError = ex is HistoryStorageException ? ex.Message : "Impossibile aprire la cronologia. Controlla la cartella dati nelle impostazioni."; history.SetPaused(true); }
-            monitor = new(messages, clipboard, history); monitor.Problem += Notify;
+            monitor = new(messages, clipboard, history); monitor.Problem += Notify; monitor.Copied += OnCopied;
+            var selectionCoordinator = new SelectionCopyCoordinator(clipboard, history, () => settings.CopyOnSelection, NativeMethods.GetClipboardSequenceNumber, OnCopied, Notify);
+            selectionCopy = new(Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread(), history, selectionCoordinator, () => settings.CopyOnSelection && storageReady && !history.IsPaused);
+            selectionCopy.Problem += Notify;
+            if (!UpdateSelectionCapture()) startupError = "Impossibile attivare la copia alla selezione. Le copie manuali restano disponibili.";
             DiagnosticLog.Write($"app-ready paused={history.IsPaused}");
             var startupActivation = false;
             try { startupActivation = Microsoft.Windows.AppLifecycle.AppInstance.GetCurrent().GetActivatedEventArgs().Kind == Microsoft.Windows.AppLifecycle.ExtendedActivationKind.StartupTask; } catch { }
@@ -87,6 +93,7 @@ public partial class App : Application
         try { await settingsStore.SaveAsync(next); }
         catch { hotkey.TryRegister(previous.Hotkey); if (actual.Enabled != current.Enabled) await startup.SetEnabledAsync(current.Enabled); throw; }
         settings = next; history.SetPaused(next.IsPaused || !storageReady); if (tray is not null) tray.Paused = next.IsPaused || !storageReady;
+        if (!UpdateSelectionCapture()) return "Impostazioni salvate, ma la copia alla selezione non è disponibile. Riprova dopo il riavvio.";
         return !storageReady ? "Cronologia non disponibile. Ripristinala prima di riprendere la cattura." :
             (!actual.Available || actual.Enabled != requestedAutoStart) ? actual.Message ?? "Windows non ha applicato la scelta di avvio automatico." : null;
     }
@@ -94,14 +101,23 @@ public partial class App : Application
     {
         if (history is null) return;
         history.SetPaused(true); storageReady = false;
+        UpdateSelectionCapture();
         // Wait for any in-flight capture to finish before archiving the database and images.
         await history.ResetWithBackupAsync(new HistoryRecovery(dataPath).PrepareResetAsync);
         storageReady = true; history.SetPaused(settings.IsPaused); if (tray is not null) tray.Paused = settings.IsPaused;
+        UpdateSelectionCapture();
     }
     void Notify(string message) { shelf?.ShowMessage(message); tray?.Notify(message); }
+    void OnCopied() { if (settings.CopySound && history?.IsPaused == false) CopyFeedbackSound.Play(); }
+    bool UpdateSelectionCapture()
+    {
+        if (selectionCopy is null) return true;
+        if (settings.CopyOnSelection && storageReady && history?.IsPaused == false) return selectionCopy.Start();
+        selectionCopy.Stop(); return true;
+    }
     void Shutdown()
     {
         if (shuttingDown) return; shuttingDown = true;
-        foreground?.Dispose(); monitor?.Dispose(); hotkey?.Dispose(); tray?.Dispose(); messages?.Dispose(); settingsWindow?.Close(); shelf?.ExitWindow(); instance.Dispose(); Exit();
+        selectionCopy?.Dispose(); foreground?.Dispose(); monitor?.Dispose(); hotkey?.Dispose(); tray?.Dispose(); messages?.Dispose(); settingsWindow?.Close(); shelf?.ExitWindow(); instance.Dispose(); Exit();
     }
 }
