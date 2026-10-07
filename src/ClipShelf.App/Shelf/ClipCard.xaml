@@ -1,0 +1,9 @@
+<UserControl x:Class="ClipShelf.App.Shelf.ClipCard" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Border Width="244" Height="176" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="10" Padding="14">
+    <Grid RowSpacing="8"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+      <Grid><TextBlock x:Name="KindLabel" FontWeight="SemiBold" FontSize="12" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/><TextBlock x:Name="PinLabel" Text="★" HorizontalAlignment="Right"/></Grid>
+      <Grid Grid.Row="1"><TextBlock x:Name="PreviewText" FontSize="14" TextWrapping="Wrap" MaxLines="5" TextTrimming="CharacterEllipsis"/><Image x:Name="PreviewImage" Stretch="Uniform"/></Grid>
+      <TextBlock x:Name="TimeLabel" Grid.Row="2" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+    </Grid>
+  </Border>
+</UserControl>

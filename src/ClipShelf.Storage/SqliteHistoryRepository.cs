@@ -3,7 +3,7 @@ using ClipShelf.Core.History;
 using Microsoft.Data.Sqlite;
 using System.Globalization;
 namespace ClipShelf.Storage;
-public sealed class SqliteHistoryRepository(string directory) : IHistoryRepository
+public sealed class SqliteHistoryRepository(string directory, IImageCleanup? imageCleanup = null) : IHistoryRepository
 {
     readonly SemaphoreSlim gate = new(1, 1);
     string DatabasePath => Path.Combine(directory, "history.db");
@@ -68,9 +68,15 @@ public sealed class SqliteHistoryRepository(string directory) : IHistoryReposito
     bool IsOwnImage(string path) => Path.GetFullPath(path).StartsWith(Path.GetFullPath(Path.Combine(directory, "images")) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
     void CleanImages(IReadOnlyList<ClipEntry> entries)
     {
-        var folder = Path.Combine(directory, "images"); if (!Directory.Exists(folder)) return;
-        var retained = entries.Where(x => x.ImagePath is not null).Select(x => Path.GetFullPath(x.ImagePath!)).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        foreach (var path in Directory.EnumerateFiles(folder))
-            if (!retained.Contains(Path.GetFullPath(path))) { try { File.Delete(path); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
+        try
+        {
+            if (imageCleanup is not null) { imageCleanup.Clean(entries); return; }
+            var folder = Path.Combine(directory, "images"); if (!Directory.Exists(folder)) return;
+            var retained = entries.Where(x => x.ImagePath is not null).Select(x => Path.GetFullPath(x.ImagePath!)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            foreach (var path in Directory.EnumerateFiles(folder))
+                if (!retained.Contains(Path.GetFullPath(path))) { try { File.Delete(path); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
     }
 }

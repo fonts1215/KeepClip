@@ -1,0 +1,66 @@
+# ClipShelf
+
+MVP personale per la cronologia degli appunti, scritto in C# / WinUI 3. Windows 10 dalla build 17763 e Windows 11; eseguibile x64.
+
+## Avvio rapido
+
+La versione pronta all'uso è in `artifacts/publish-x64/ClipShelf.App.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. È autonoma e non richiede di installare .NET o Windows App Runtime separatamente.
+
+Per usare la versione portabile ZIP, estrai tutti i file in una cartella stabile prima di avviare l'eseguibile. Non avviarlo direttamente dentro lo ZIP.
+
+Se una versione precedente è già nell'area di notifica, scegli **Esci** nel suo menu prima di aprire quella nuova. L'app permette una sola istanza per sessione Windows.
+
+## Uso
+
+- Copia testo o immagini con i normali comandi dell'app che stai usando.
+- Premi **Ctrl+Shift+V**: la cronologia compare vicino al bordo inferiore del monitor.
+- Fai clic su una scheda o selezionala con le frecce e premi **Invio**: ClipShelf torna alla finestra precedente e invia Ctrl+V.
+- **Esc** chiude il pannello senza incollare. La cattura continua in background.
+- Per fissare o eliminare una voce, selezionala con la tastiera e usa i pulsanti in basso. Il clic sulla scheda incolla direttamente.
+- Cerca nel testo; il filtro **★ Preferiti** mostra solo gli elementi fissati. Non è previsto OCR delle immagini.
+- **Svuota…** conserva i preferiti salvo scelta esplicita di includerli.
+
+## Impostazioni
+
+Il toggle **Cattura degli appunti** acceso significa **Attiva**, spento significa **In pausa**. Le modifiche si applicano con **Salva impostazioni**. La pausa del menu nell'area di notifica invece si applica immediatamente.
+
+Scorciatoia: Ctrl+Shift, Ctrl+Alt o Alt+Shift e una lettera A–Z. Una combinazione occupata viene segnalata e resta valida quella precedente.
+
+**Avvia all'accesso a Windows** funziona sia con MSIX sia nella versione portabile. Con MSIX usa StartupTask; nella versione portabile registra l'eseguibile per il solo account corrente. Nessuna elevazione richiesta. All'accesso parte nell'area di notifica, senza aprire il pannello. Mantieni il percorso portabile stabile; se lo sposti, salva nuovamente l'impostazione di avvio. Prima di eliminare la cartella portabile, disabilita l'avvio automatico. Le impostazioni di Windows e le policy aziendali possono impedirne l'esecuzione.
+
+## Dati e limiti
+
+Testo Unicode e bitmap normalizzate in PNG. Niente file o formattazione HTML. Massimo 200 elementi e 250 MiB complessivi; massimo 20 MiB per PNG e 40 megapixel prima della decodifica. I preferiti non vengono espulsi automaticamente: quando impediscono l'acquisizione di nuovi elementi, compare un avviso.
+
+Versione portabile: dati in `%LOCALAPPDATA%\ClipShelf`. Installazione MSIX: cartella LocalState del pacchetto. Il percorso effettivo compare nelle impostazioni. Le due modalità hanno cartelle dati separate.
+
+Nessun account o invio di contenuti in rete. I dati non sono cifrati dall'app. Il log `diagnostic.log` contiene eventi, conteggi e codici d'errore, mai testo o immagini copiati. Il ripristino della cronologia crea prima un backup completo dei file, poi una cronologia vuota.
+
+## Sviluppo
+
+Requisiti: .NET SDK 10.0.401 e Windows SDK, con strumenti WinUI/XAML disponibili tramite Visual Studio. I pacchetti NuGet sono fissati; i lock file fanno parte del progetto.
+
+```powershell
+dotnet restore ClipShelf.sln
+dotnet test tests/ClipShelf.Tests --no-restore
+dotnet build src/ClipShelf.App/ClipShelf.App.csproj -c Release -p:Platform=x64
+dotnet publish src/ClipShelf.App/ClipShelf.App.csproj -c Release -p:Platform=x64 -o artifacts/publish-x64
+```
+
+Chiudi l'app prima di ricompilare lo stesso percorso che stai eseguendo, per evitare file bloccati.
+
+## MSIX
+
+```powershell
+./scripts/Build-Package.ps1
+# Firma facoltativa con un certificato già presente in CurrentUser/My:
+./scripts/Build-Package.ps1 -SkipBuild -CertificateThumbprint '<impronta del certificato>'
+```
+
+Output: `artifacts/ClipShelf-0.1.0-x64.msix`. L'Identity Publisher del manifest è `CN=ClipShelf`: il certificato di firma deve avere lo stesso subject. Il pacchetto fornito è **non firmato**, quindi non è direttamente installabile. La firma e l'attendibilità del certificato sul dispositivo restano da configurare dall'utente. Lo script non crea certificati, non li installa e non cambia le policy di Windows. La versione portabile si può usare senza questa procedura.
+
+## Verifica e limiti residui
+
+Vedi `docs/manual-verification.md`. I test automatici verificano cronologia, persistenza, ricerca, controllo del destinatario e logica dell'avvio. Non certificano l'effettivo incolla in ogni app né l'accesso successivo a Windows.
+
+Windows può impedire l'incolla verso un processo elevato: l'elemento resta copiato e l'app propone Ctrl+V manuale. La destinazione deve accettare il tipo di contenuto scelto. L'accettazione di SendInput non dimostra che l'app esterna abbia incollato il contenuto.

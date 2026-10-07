@@ -10,6 +10,9 @@ public sealed class HistoryService(IHistoryRepository repository, Func<Guid, byt
     readonly SemaphoreSlim gate = new(1, 1);
     readonly HistoryPolicy policy = new();
     volatile bool paused;
+    long captureGeneration;
+    public bool IsPaused => paused;
+    public long CaptureGeneration => Interlocked.Read(ref captureGeneration);
     uint? lastSequence;
     public async Task InitializeAsync(CancellationToken ct = default)
     {
@@ -17,14 +20,19 @@ public sealed class HistoryService(IHistoryRepository repository, Func<Guid, byt
         try { Entries = await repository.LoadAsync(ct); HistoryChanged?.Invoke(); }
         finally { gate.Release(); }
     }
-    public void SetPaused(bool value) => paused = value;
+    public void SetPaused(bool value)
+    {
+        if (paused == value) return;
+        paused = value; Interlocked.Increment(ref captureGeneration);
+    }
     public async Task<CaptureResult> CaptureAsync(ClipboardSnapshot snapshot, CancellationToken ct = default)
     {
-        if (paused || snapshot.IsOwnWrite) return new(false);
+        if (paused || snapshot.IsOwnWrite || (snapshot.CaptureGeneration.HasValue && snapshot.CaptureGeneration != CaptureGeneration)) return new(false);
         await gate.WaitAsync(ct);
         try
         {
-            if (paused || (lastSequence.HasValue && unchecked((int)(snapshot.Sequence - lastSequence.Value)) <= 0)) return new(false);
+            if (paused || (snapshot.CaptureGeneration.HasValue && snapshot.CaptureGeneration != CaptureGeneration) ||
+                (lastSequence.HasValue && unchecked((int)(snapshot.Sequence - lastSequence.Value)) <= 0)) return new(false);
             lastSequence = snapshot.Sequence;
             var content = snapshot.Content;
             byte[] bytes;
@@ -51,6 +59,12 @@ public sealed class HistoryService(IHistoryRepository repository, Func<Guid, byt
     {
         await gate.WaitAsync();
         try { var next = mutate(Entries); await repository.SaveAsync(next); Entries = next; HistoryChanged?.Invoke(); }
+        finally { gate.Release(); }
+    }
+    public async Task ResetWithBackupAsync(Func<Task> backup)
+    {
+        await gate.WaitAsync();
+        try { await backup(); await repository.SaveAsync([]); Entries = []; HistoryChanged?.Invoke(); }
         finally { gate.Release(); }
     }
 }

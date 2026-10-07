@@ -42,6 +42,15 @@ public class ClipboardCaptureTests
     {
         var adapter = new BusyAdapter(); await Assert.ThrowsAsync<System.Runtime.InteropServices.COMException>(() => ClipboardReader.ReadWithRetryAsync(adapter)); Assert.Equal(3, adapter.Reads);
     }
+    [Fact] public async Task DeferredReadCannotBeCapturedAfterPauseResume()
+    {
+        var service = Service(); var generation = service.CaptureGeneration;
+        service.SetPaused(true); service.SetPaused(false);
+        await service.CaptureAsync(new(new(ClipKind.Text, "late"), 1, CaptureGeneration: generation));
+        Assert.Empty(service.Entries);
+        await service.CaptureAsync(new(new(ClipKind.Text, "fresh"), 2, CaptureGeneration: service.CaptureGeneration));
+        Assert.Equal("fresh", Assert.Single(service.Entries).Text);
+    }
     sealed class BusyAdapter : IClipboardAdapter
     {
         public int Reads;

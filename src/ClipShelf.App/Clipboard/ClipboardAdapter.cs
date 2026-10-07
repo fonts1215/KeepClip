@@ -32,7 +32,12 @@ internal sealed class ClipboardAdapter : IClipboardAdapter
         else if (view.Contains(StandardDataFormats.Text)) content = new(ClipKind.Text, await view.GetTextAsync());
         ct.ThrowIfCancellationRequested();
         // A delayed producer can change the clipboard while its data is being materialized.
-        return content is not null && sequence == NativeMethods.GetClipboardSequenceNumber() ? new(content, sequence) : null;
+        if (content is not null && sequence != NativeMethods.GetClipboardSequenceNumber())
+        {
+            DiagnosticLog.Write("clipboard-sequence-changed-retry");
+            throw new System.Runtime.InteropServices.COMException("Appunti cambiati durante la lettura.", unchecked((int)0x800401D0));
+        }
+        return content is not null ? new(content, sequence) : null;
     }
     public async Task WriteAsync(ClipContent content, Guid operationId, CancellationToken ct = default)
     {

@@ -12,11 +12,14 @@ internal sealed class ClipboardMonitor : IDisposable
     {
         this.window = window; this.adapter = adapter; this.history = history;
         if (!NativeMethods.AddClipboardFormatListener(window.Handle)) throw new Win32Exception();
+        DiagnosticLog.Write("listener-registered");
         window.Message += OnMessage;
     }
     void OnMessage(uint message, nuint wp, nint lp)
     {
         if (message != NativeMethods.WM_CLIPBOARDUPDATE) return;
+        DiagnosticLog.Write($"clipboard-notification paused={history.IsPaused}");
+        if (history.IsPaused) return;
         pending = true; if (!reading) ReadPending();
     }
     async void ReadPending()
@@ -27,13 +30,25 @@ internal sealed class ClipboardMonitor : IDisposable
             while (pending && !lifetime.IsCancellationRequested)
             {
                 pending = false;
+                var generation = history.CaptureGeneration;
+                if (history.IsPaused) continue;
                 try
                 {
                     var snapshot = await ClipboardReader.ReadWithRetryAsync(adapter, lifetime.Token);
-                    if (snapshot is not null) { var result = await history.CaptureAsync(snapshot, lifetime.Token); if (result.Message is not null) Problem?.Invoke(result.Message); }
+                    if (snapshot is not null)
+                    {
+                        var result = await history.CaptureAsync(snapshot with { CaptureGeneration = generation }, lifetime.Token);
+                        DiagnosticLog.Write($"capture completed={result.Captured} own={snapshot.IsOwnWrite} count={history.Entries.Count}");
+                        if (result.Message is not null) Problem?.Invoke(result.Message);
+                    }
+                    else DiagnosticLog.Write("clipboard-unsupported-or-empty");
                 }
                 catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { }
-                catch (Exception ex) { Problem?.Invoke(ex is InvalidDataException ? ex.Message : "Impossibile acquisire gli appunti. Riprova a copiare l'elemento."); }
+                catch (Exception ex)
+                {
+                    DiagnosticLog.Write($"capture-error type={ex.GetType().Name} hresult=0x{ex.HResult:X8}");
+                    Problem?.Invoke(ex is InvalidDataException ? ex.Message : $"Impossibile acquisire gli appunti (0x{ex.HResult:X8}). Riprova a copiare l'elemento.");
+                }
             }
         }
         finally { reading = false; }
