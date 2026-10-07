@@ -11,6 +11,12 @@ internal static class NativeMethods
     }
     [StructLayout(LayoutKind.Sequential)] internal struct Rect { public int Left, Top, Right, Bottom; }
     [StructLayout(LayoutKind.Sequential)] internal struct Point { public int X, Y; }
+    [StructLayout(LayoutKind.Sequential)] internal struct MouseHookData { public Point Point; public uint MouseData, Flags, Time; public nuint Extra; }
+    internal delegate nint MouseHookProc(int code, nuint message, nint data);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)] internal static extern nint SetWindowsHookEx(int id, MouseHookProc callback, nint module, uint thread);
+    [DllImport("user32.dll")] internal static extern bool UnhookWindowsHookEx(nint hook);
+    [DllImport("user32.dll")] internal static extern nint CallNextHookEx(nint hook, int code, nuint message, nint data);
+    [DllImport("user32.dll")] internal static extern bool GetWindowRect(nint hwnd, out Rect rect);
     [StructLayout(LayoutKind.Sequential)] internal struct MonitorInfo { public uint Size; public Rect Monitor, Work; public uint Flags; }
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)] internal struct NotifyIconData
     {
@@ -34,6 +40,14 @@ internal static class NativeMethods
     [DllImport("user32.dll", SetLastError = true)] internal static extern bool AddClipboardFormatListener(nint hwnd);
     [DllImport("user32.dll")] internal static extern bool RemoveClipboardFormatListener(nint hwnd);
     [DllImport("user32.dll")] internal static extern uint GetClipboardSequenceNumber();
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] internal static extern uint RegisterClipboardFormat(string name);
+    [DllImport("user32.dll")] internal static extern bool IsClipboardFormatAvailable(uint format);
+    [DllImport("user32.dll", SetLastError = true)] internal static extern bool OpenClipboard(nint window);
+    [DllImport("user32.dll")] internal static extern bool CloseClipboard();
+    [DllImport("user32.dll", SetLastError = true)] internal static extern nint GetClipboardData(uint format);
+    [DllImport("kernel32.dll", SetLastError = true)] internal static extern nint GlobalLock(nint memory);
+    [DllImport("kernel32.dll")] internal static extern bool GlobalUnlock(nint memory);
+    [DllImport("kernel32.dll")] internal static extern nuint GlobalSize(nint memory);
     [DllImport("user32.dll", SetLastError = true)] internal static extern bool RegisterHotKey(nint hwnd, int id, uint modifiers, uint key);
     [DllImport("user32.dll")] internal static extern bool UnregisterHotKey(nint hwnd, int id);
     [DllImport("user32.dll")] internal static extern nint GetForegroundWindow();

@@ -3,6 +3,11 @@ using ClipShelf.App.Interop;
 namespace ClipShelf.Tests;
 public class NativeInputLayoutTests
 {
+    [Fact] public void MouseHookDataMatchesWindowsX64Abi()
+    {
+        Assert.Equal(32, Marshal.SizeOf<NativeMethods.MouseHookData>());
+        Assert.Equal((nint)24, Marshal.OffsetOf<NativeMethods.MouseHookData>(nameof(NativeMethods.MouseHookData.Extra)));
+    }
     [Fact] public void InputMatchesWindowsX64Abi()
     {
         Assert.Equal(8, IntPtr.Size);

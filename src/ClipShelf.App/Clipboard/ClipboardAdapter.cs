@@ -16,18 +16,20 @@ internal sealed class ClipboardAdapter : IClipboardAdapter
         if (view.Contains(PrivateFormat) && (await view.GetDataAsync(PrivateFormat)) is string token && token.StartsWith(owner + ":", StringComparison.Ordinal))
             return new(new(ClipKind.Text), sequence, true);
         ClipContent? content = null;
-        if (view.Contains(StandardDataFormats.Bitmap))
+        // Delayed rendering can block GetClipboardData. Keep the native clipboard
+        // transaction on one worker thread so the shelf and hotkey stay responsive.
+        var nativePng = await Task.Run(NativeClipboardImage.ReadPng, ct);
+        if (nativePng is not null)
+        {
+            using var source = new InMemoryRandomAccessStream();
+            using (var writer = new DataWriter(source.GetOutputStreamAt(0))) { writer.WriteBytes(nativePng); await writer.StoreAsync(); writer.DetachStream(); }
+            source.Seek(0); content = new(ClipKind.Image, Png: await NormalizeImageAsync(source));
+            DiagnosticLog.Write("clipboard-image native-png");
+        }
+        else if (view.Contains(StandardDataFormats.Bitmap))
         {
             var reference = await view.GetBitmapAsync(); using var source = await reference.OpenReadAsync();
-            var decoder = await BitmapDecoder.CreateAsync(source);
-            if ((ulong)decoder.PixelWidth * decoder.PixelHeight > 40_000_000) throw new InvalidDataException("Immagine troppo grande: massimo 40 megapixel.");
-            using var output = new InMemoryRandomAccessStream();
-            var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, output);
-            using var bitmap = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
-            encoder.SetSoftwareBitmap(bitmap); await encoder.FlushAsync();
-            if (output.Size > (ulong)HistoryPolicy.MaxImageBytes) throw new InvalidDataException("Immagine troppo grande: massimo 20 MiB.");
-            output.Seek(0); using var reader = new DataReader(output.GetInputStreamAt(0)); await reader.LoadAsync((uint)output.Size);
-            var bytes = new byte[checked((int)output.Size)]; reader.ReadBytes(bytes); content = new(ClipKind.Image, Png: bytes);
+            content = new(ClipKind.Image, Png: await NormalizeImageAsync(source));
         }
         else if (view.Contains(StandardDataFormats.Text)) content = new(ClipKind.Text, await view.GetTextAsync());
         ct.ThrowIfCancellationRequested();
@@ -38,6 +40,18 @@ internal sealed class ClipboardAdapter : IClipboardAdapter
             throw new System.Runtime.InteropServices.COMException("Appunti cambiati durante la lettura.", unchecked((int)0x800401D0));
         }
         return content is not null ? new(content, sequence) : null;
+    }
+    static async Task<byte[]> NormalizeImageAsync(IRandomAccessStream source)
+    {
+            var decoder = await BitmapDecoder.CreateAsync(source);
+            if ((ulong)decoder.PixelWidth * decoder.PixelHeight > 40_000_000) throw new InvalidDataException("Immagine troppo grande: massimo 40 megapixel.");
+            using var output = new InMemoryRandomAccessStream();
+            var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, output);
+            using var bitmap = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
+            encoder.SetSoftwareBitmap(bitmap); await encoder.FlushAsync();
+            if (output.Size > (ulong)HistoryPolicy.MaxImageBytes) throw new InvalidDataException("Immagine troppo grande: massimo 20 MiB.");
+            output.Seek(0); using var reader = new DataReader(output.GetInputStreamAt(0)); await reader.LoadAsync((uint)output.Size);
+            var bytes = new byte[checked((int)output.Size)]; reader.ReadBytes(bytes); return bytes;
     }
     public async Task WriteAsync(ClipContent content, Guid operationId, CancellationToken ct = default)
     {

@@ -16,6 +16,7 @@ public sealed partial class ShelfWindow : Window
     readonly HistoryService history; readonly ShelfViewModel model = new();
     readonly PasteCoordinator paste;
     readonly PasteSession session = new();
+    readonly OutsideClickWatcher outsideClicks;
     PasteRequest? continuation;
     bool busy, dialogOpen, exiting;
     public bool IsVisible { get; private set; }
@@ -24,6 +25,11 @@ public sealed partial class ShelfWindow : Window
     public ShelfWindow(HistoryService history, IClipboardAdapter clipboard)
     {
         InitializeComponent(); this.history = history; Root.DataContext = model;
+        outsideClicks = new(WinRT.Interop.WindowNative.GetWindowHandle(this), () => IsVisible && !dialogOpen, () =>
+        {
+            var request = session.Snapshot();
+            DispatcherQueue.TryEnqueue(() => { if (session.IsCurrent(request) && IsVisible && !dialogOpen) { DiagnosticLog.Write("shelf-dismiss outside-click"); Hide(); } });
+        });
         paste = new(clipboard, new WindowTarget(), new PasteInput(), () => { Hide(); continuation = session.Snapshot(); });
         var presenter = (OverlappedPresenter)AppWindow.Presenter;
         presenter.SetBorderAndTitleBar(true, false); presenter.IsResizable = false; presenter.IsMaximizable = false; presenter.IsMinimizable = false; presenter.IsAlwaysOnTop = true;
@@ -57,11 +63,11 @@ public sealed partial class ShelfWindow : Window
             AppWindow.MoveAndResize(new RectInt32(info.Work.Left + (info.Work.Right - info.Work.Left - w) / 2, info.Work.Bottom - h - 16, w, h));
             CountLabel.Visibility = w / scale < 1000 ? Visibility.Collapsed : Visibility.Visible;
         }
-        IsVisible = true; AppWindow.Show(); Activate(); Search.Focus(FocusState.Programmatic);
+        IsVisible = true; outsideClicks.Start(); AppWindow.Show(); Activate(); Search.Focus(FocusState.Programmatic);
     }
-    public void Hide() { if (!IsVisible) return; session.Cancel(); IsVisible = false; AppWindow.Hide(); }
+    public void Hide() { if (!IsVisible) return; session.Cancel(); IsVisible = false; outsideClicks.Stop(); AppWindow.Hide(); }
     public void ShowMessage(string message) { Status.Message = message; Status.IsOpen = true; }
-    public void ExitWindow() { exiting = true; history.HistoryChanged -= OnHistoryChanged; Close(); }
+    public void ExitWindow() { exiting = true; outsideClicks.Dispose(); history.HistoryChanged -= OnHistoryChanged; Close(); }
     void Settings_Click(object sender, RoutedEventArgs e) { Hide(); SettingsRequested?.Invoke(); }
     void Cards_ItemClick(object sender, ItemClickEventArgs e) { if (e.ClickedItem is ClipEntry entry) model.SelectedEntry = entry; }
     async void Cards_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
