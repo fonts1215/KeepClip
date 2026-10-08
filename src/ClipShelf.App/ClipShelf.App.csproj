@@ -5,8 +5,12 @@
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
     <RootNamespace>ClipShelf.App</RootNamespace>
+    <AssemblyName>KeepClip</AssemblyName>
+    <AssemblyTitle>KeepClip</AssemblyTitle>
+    <Product>KeepClip</Product>
+    <Description>Cronologia personale degli appunti</Description>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <ApplicationIcon>Assets/ClipShelf.ico</ApplicationIcon>
+    <ApplicationIcon>Assets/KeepClip.ico</ApplicationIcon>
     <Platforms>x64</Platforms><PlatformTarget>x64</PlatformTarget>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <UseWinUI>true</UseWinUI>

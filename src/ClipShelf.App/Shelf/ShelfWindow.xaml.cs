@@ -28,7 +28,7 @@ public sealed partial class ShelfWindow : Window
     public ShelfWindow(HistoryService history, IClipboardAdapter clipboard)
     {
         InitializeComponent(); this.history = history; Root.DataContext = model;
-        AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "ClipShelf.ico"));
+        AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "KeepClip.ico"));
         outsideClicks = new(WinRT.Interop.WindowNative.GetWindowHandle(this), () => IsVisible && !dialogOpen, () =>
         {
             var request = session.Snapshot();

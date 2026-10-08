@@ -12,15 +12,15 @@ internal sealed class TrayIconService : IDisposable
     {
         this.window = window;
         var size = Math.Clamp((int)Math.Round(16 * NativeMethods.GetDpiForWindow(window.Handle) / 96d), 16, 256);
-        icon = new System.Drawing.Icon(Path.Combine(AppContext.BaseDirectory, "Assets", "ClipShelf.ico"), size, size);
+        icon = new System.Drawing.Icon(Path.Combine(AppContext.BaseDirectory, "Assets", "KeepClip.ico"), size, size);
         data = new() { Size = (uint)Marshal.SizeOf<NativeMethods.NotifyIconData>(), Window = window.Handle, Id = 1, Flags = 7, Callback = NativeMethods.WM_TRAY,
-            Icon = icon.Handle, Tip = "ClipShelf — cronologia appunti", Info = "", InfoTitle = "" };
+            Icon = icon.Handle, Tip = "KeepClip — cronologia appunti", Info = "", InfoTitle = "" };
         window.Message += OnMessage;
     }
     public void Show() => NativeMethods.Shell_NotifyIcon(0, ref data);
     public void Notify(string message)
     {
-        data.Flags = 0x10; data.InfoTitle = "ClipShelf"; data.Info = message.Length > 255 ? message[..255] : message; data.InfoFlags = 1;
+        data.Flags = 0x10; data.InfoTitle = "KeepClip"; data.Info = message.Length > 255 ? message[..255] : message; data.InfoFlags = 1;
         NativeMethods.Shell_NotifyIcon(1, ref data); data.Flags = 7;
     }
     void OnMessage(uint msg, nuint wp, nint lp)

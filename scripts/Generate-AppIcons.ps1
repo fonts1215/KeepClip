@@ -1,5 +1,5 @@
 param(
-    [string]$Source = (Join-Path $PSScriptRoot '../branding/ClipShelf.master.png'),
+    [string]$Source = (Join-Path $PSScriptRoot '../branding/KeepClip.master.png'),
     [string]$OutputDirectory = (Join-Path $PSScriptRoot '../src/ClipShelf.App/Assets')
 )
 $ErrorActionPreference = 'Stop'
@@ -37,7 +37,7 @@ try {
     }
     # ICO frames contain the same transparent PNGs, with no palette or alpha conversion.
     $frames = @($iconSizes | ForEach-Object { ,([IO.File]::ReadAllBytes((Join-Path $outputRoot "Square44x44Logo.targetsize-$_.png"))) })
-    $stream = [IO.File]::Create((Join-Path $outputRoot 'ClipShelf.ico'))
+    $stream = [IO.File]::Create((Join-Path $outputRoot 'KeepClip.ico'))
     $writer = [IO.BinaryWriter]::new($stream)
     try {
         $writer.Write([uint16]0); $writer.Write([uint16]1); $writer.Write([uint16]$iconSizes.Count)

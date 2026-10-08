@@ -9,11 +9,11 @@ if (-not $SkipBuild) {
     & dotnet publish (Join-Path $productRoot 'src/ClipShelf.App/ClipShelf.App.csproj') -c Release -p:Platform=x64 -o $publishRoot --verbosity minimal
     if ($LASTEXITCODE -ne 0) { throw 'Publish non riuscito.' }
 }
-if (-not (Test-Path -LiteralPath (Join-Path $publishRoot 'ClipShelf.App.exe'))) { throw 'Eseguibile pubblicato non disponibile.' }
+if (-not (Test-Path -LiteralPath (Join-Path $publishRoot 'KeepClip.exe'))) { throw 'Eseguibile pubblicato non disponibile.' }
 Copy-Item -LiteralPath (Join-Path $productRoot 'packaging/AppxManifest.xml') -Destination (Join-Path $publishRoot 'AppxManifest.xml')
 $assetRoot = Join-Path $publishRoot 'Assets'
 New-Item -ItemType Directory -Path $assetRoot -Force | Out-Null
-foreach ($asset in @('StoreLogo.png', 'Square44x44Logo.png', 'Square150x150Logo.png', 'ClipShelf.ico')) {
+foreach ($asset in @('StoreLogo.png', 'Square44x44Logo.png', 'Square150x150Logo.png', 'KeepClip.ico')) {
     if (-not (Test-Path -LiteralPath (Join-Path $assetRoot $asset))) {
         throw "Asset mancante nel publish: $asset. Genera gli asset con scripts/Generate-AppIcons.ps1 e ripeti il publish."
     }
@@ -21,7 +21,7 @@ foreach ($asset in @('StoreLogo.png', 'Square44x44Logo.png', 'Square150x150Logo.
 $sdkBinRoot = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits/10/bin'
 $sdk = Get-ChildItem -LiteralPath $sdkBinRoot -Directory | Where-Object { $_.Name -match '^10\.0\.\d+\.0$' -and (Test-Path -LiteralPath (Join-Path $_.FullName 'x64/makeappx.exe')) } | Sort-Object { [version]$_.Name } -Descending | Select-Object -First 1
 if (-not $sdk) { throw 'MakeAppx non trovato. Installa Windows SDK tramite Visual Studio.' }
-$packagePath = Join-Path $artifactRoot 'ClipShelf-0.1.0-x64.msix'
+$packagePath = Join-Path $artifactRoot 'KeepClip-0.1.0-x64.msix'
 & (Join-Path $sdk.FullName 'x64/makeappx.exe') pack /d $publishRoot /p $packagePath /o
 if ($LASTEXITCODE -ne 0) { throw 'Creazione MSIX non riuscita.' }
 if ($CertificateThumbprint) {

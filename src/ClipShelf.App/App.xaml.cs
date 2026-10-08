@@ -19,7 +19,7 @@ public partial class App : Application
     SelectionCopyService? selectionCopy;
     string dataPath = "";
     bool storageReady, shuttingDown;
-    public App() { InitializeComponent(); UnhandledException += (_, e) => { e.Handled = true; Notify("Si è verificato un errore. Se persiste, riavvia ClipShelf."); }; }
+    public App() { InitializeComponent(); UnhandledException += (_, e) => { e.Handled = true; Notify("Si è verificato un errore. Se persiste, riavvia KeepClip."); }; }
     protected override async void OnLaunched(LaunchActivatedEventArgs args)
     {
         if (!instance.TryAcquire()) { Exit(); return; }
@@ -56,7 +56,7 @@ public partial class App : Application
         {
             // Diagnostic log contains exception type only, never clipboard payloads.
             System.Diagnostics.Debug.WriteLine(ex.GetType().Name);
-            if (shelf is not null) { shelf.ShowFor(0); shelf.ShowMessage("Avvio incompleto. Verifica le dipendenze e riavvia ClipShelf."); }
+            if (shelf is not null) { shelf.ShowFor(0); shelf.ShowMessage("Avvio incompleto. Verifica le dipendenze e riavvia KeepClip."); }
             else Shutdown();
         }
     }

@@ -38,17 +38,17 @@ Prima di cominciare: usa la build aggiornata, imposta Cattura degli appunti su *
 | 19 — Spazi card | Apri con avviso di pausa visibile; chiudi l'avviso e riapri | Card intera con data leggibile; altezza pannello adattata senza tagli | Build riuscita; verifica visiva affidata all'utente |
 | 20 — Copia alla selezione | Cattura attiva; abilita la nuova opzione e salva; seleziona testo in Blocco note senza Ctrl+C, poi apri il pannello | Nuova voce con il testo selezionato; anche Ctrl+V in un documento di prova usa quel testo | Logica automatica superata; compatibilità desktop affidata all'utente |
 | 21 — Suono | Abilita suono e salva; copia con Ctrl+C e con selezione; disabilita suono e salva | Un suono breve per copia acquisita; nessun suono con opzione disattivata | Risorsa audio inclusa; ascolto affidato all'utente |
-| 22 — Esclusioni selezione | Seleziona nella ricerca ClipShelf; pausa cattura e seleziona in Blocco note | Nessuna copia automatica; cronologia invariata | Logica automatica superata; desktop affidato all'utente |
+| 22 — Esclusioni selezione | Seleziona nella ricerca KeepClip; pausa cattura e seleziona in Blocco note | Nessuna copia automatica; cronologia invariata | Logica automatica superata; desktop affidato all'utente |
 
 Riporta numero del test, applicazione destinataria, passaggi e risultato. Se la cattura attiva fallisce, controlla l'eventuale avviso e il log locale `diagnostic.log`, che non contiene i dati copiati.
 
 ## File e cartelle
 1. Copia un file da Esplora file con Ctrl+C. Apri una cartella di destinazione, poi Ctrl+Shift+V e doppio clic sulla card: il file deve comparire nella destinazione e restare nell'origine.
 2. Ripeti con più file e una cartella: una sola card, nomi e conteggio corretti, tutta la selezione incollata.
-3. Cerca il nome di un file e aggiungi la card ai preferiti. Riavvia ClipShelf: card e riferimenti devono essere conservati.
+3. Cerca il nome di un file e aggiungi la card ai preferiti. Riavvia KeepClip: card e riferimenti devono essere conservati.
 4. Su file di prova, sposta o elimina un originale: la card deve indicare originali non disponibili e l'incolla deve avvisare senza copiare solo gli altri file.
 5. Elimina la card: gli originali devono restare intatti.
-6. Su un file di prova, usa Taglia, poi incolla dalla card di ClipShelf: deve essere copiato senza rimuovere l'originale.
+6. Su un file di prova, usa Taglia, poi incolla dalla card di KeepClip: deve essere copiato senza rimuovere l'originale.
 7. Ripeti una copia di testo e un'immagine per confermare i flussi precedenti.
 
 ## Copia alla selezione: protezione dei campi di input
