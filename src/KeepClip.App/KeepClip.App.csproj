@@ -25,7 +25,7 @@
     <Content Update="Assets/**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"/>
     <ProjectReference Include="../KeepClip.Core/KeepClip.Core.csproj"/>
     <ProjectReference Include="../KeepClip.Storage/KeepClip.Storage.csproj"/>
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.5.1"/>
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2"/>
+    <PackageReference Include="Microsoft.WindowsAppSDK"/>
+    <PackageReference Include="CommunityToolkit.Mvvm"/>
   </ItemGroup>
 </Project>

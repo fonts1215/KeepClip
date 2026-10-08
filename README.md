@@ -44,14 +44,16 @@ Nessun account o invio di contenuti in rete. I dati non sono cifrati dall'app. I
 
 ## Sviluppo
 
-Requisiti: .NET SDK 10.0.401 e Windows SDK, con strumenti WinUI/XAML disponibili tramite Visual Studio. I pacchetti NuGet sono fissati; i lock file fanno parte del progetto.
+Requisiti: .NET SDK 10.0.401 e Windows SDK, con strumenti WinUI/XAML disponibili tramite Visual Studio. Apri la soluzione `KeepClip.slnx`. Le versioni NuGet sono centralizzate in `Directory.Packages.props`; i progetti dichiarano solo i pacchetti utilizzati e i lock file fanno parte del progetto.
 
 ```powershell
-dotnet restore KeepClip.sln
+dotnet restore KeepClip.slnx --locked-mode
 dotnet test tests/KeepClip.Tests --no-restore
 dotnet build src/KeepClip.App/KeepClip.App.csproj -c Release -p:Platform=x64
 dotnet publish src/KeepClip.App/KeepClip.App.csproj -c Release -p:Platform=x64 -o artifacts/publish-x64
 ```
+
+Per aggiornare una dipendenza, modifica la sua versione in `Directory.Packages.props`, esegui `dotnet restore KeepClip.slnx --force-evaluate` e includi nel commit i lock file aggiornati. Il restore in modalità bloccata verifica che le dipendenze corrispondano ai lock file.
 
 Chiudi l'app prima di ricompilare lo stesso percorso che stai eseguendo, per evitare file bloccati.
 
