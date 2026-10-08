@@ -12,7 +12,7 @@ Dalla cartella del progetto:
 ./scripts/Generate-AppIcons.ps1
 ```
 
-Output in `src/ClipShelf.App/Assets`: AppLogo.png (256 px), KeepClip.ico (16/20/24/32/40/48/64/96/256 px), StoreLogo e Square44x44Logo/Square150x150Logo alle scale 100/125/150/200/250/300/400, più le varianti targetsize trasparenti standard/unplated/lightunplated. Le varianti per i temi chiaro e scuro mantengono gli stessi colori.
+Output in `src/KeepClip.App/Assets`: AppLogo.png (256 px), KeepClip.ico (16/20/24/32/40/48/64/96/256 px), StoreLogo e Square44x44Logo/Square150x150Logo alle scale 100/125/150/200/250/300/400, più le varianti targetsize trasparenti standard/unplated/lightunplated. Le varianti per i temi chiaro e scuro mantengono gli stessi colori.
 
 L'ICO è incluso nell'eseguibile, nell'area di notifica e nelle finestre. AppLogo.png compare nell'header. Il manifest MSIX usa i PNG pubblicati: Build-Package.ps1 verifica la presenza degli asset senza sostituirli.
 

@@ -6,7 +6,7 @@ $publishRoot = Join-Path $artifactRoot 'publish-x64'
 if ($PublishDirectory) { $publishRoot = [System.IO.Path]::GetFullPath($PublishDirectory) }
 New-Item -ItemType Directory -Path $publishRoot -Force | Out-Null
 if (-not $SkipBuild) {
-    & dotnet publish (Join-Path $productRoot 'src/ClipShelf.App/ClipShelf.App.csproj') -c Release -p:Platform=x64 -o $publishRoot --verbosity minimal
+    & dotnet publish (Join-Path $productRoot 'src/KeepClip.App/KeepClip.App.csproj') -c Release -p:Platform=x64 -o $publishRoot --verbosity minimal
     if ($LASTEXITCODE -ne 0) { throw 'Publish non riuscito.' }
 }
 if (-not (Test-Path -LiteralPath (Join-Path $publishRoot 'KeepClip.exe'))) { throw 'Eseguibile pubblicato non disponibile.' }

@@ -1,6 +1,6 @@
 param(
     [string]$Source = (Join-Path $PSScriptRoot '../branding/KeepClip.master.png'),
-    [string]$OutputDirectory = (Join-Path $PSScriptRoot '../src/ClipShelf.App/Assets')
+    [string]$OutputDirectory = (Join-Path $PSScriptRoot '../src/KeepClip.App/Assets')
 )
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing

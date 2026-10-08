@@ -4,7 +4,7 @@ MVP personale per la cronologia degli appunti, scritto in C# / WinUI 3. Windows 
 
 ## Avvio rapido
 
-La versione aggiornata pronta all'uso è in `artifacts/publish-keepclip-x64/KeepClip.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. È autonoma e non richiede di installare .NET o Windows App Runtime separatamente.
+La versione aggiornata pronta all'uso è in `artifacts/publish-keepclip-project-x64/KeepClip.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. È autonoma e non richiede di installare .NET o Windows App Runtime separatamente.
 
 Per usare la versione portabile ZIP, estrai tutti i file in una cartella stabile prima di avviare l'eseguibile. Non avviarlo direttamente dentro lo ZIP.
 
@@ -47,10 +47,10 @@ Nessun account o invio di contenuti in rete. I dati non sono cifrati dall'app. I
 Requisiti: .NET SDK 10.0.401 e Windows SDK, con strumenti WinUI/XAML disponibili tramite Visual Studio. I pacchetti NuGet sono fissati; i lock file fanno parte del progetto.
 
 ```powershell
-dotnet restore ClipShelf.sln
-dotnet test tests/ClipShelf.Tests --no-restore
-dotnet build src/ClipShelf.App/ClipShelf.App.csproj -c Release -p:Platform=x64
-dotnet publish src/ClipShelf.App/ClipShelf.App.csproj -c Release -p:Platform=x64 -o artifacts/publish-x64
+dotnet restore KeepClip.sln
+dotnet test tests/KeepClip.Tests --no-restore
+dotnet build src/KeepClip.App/KeepClip.App.csproj -c Release -p:Platform=x64
+dotnet publish src/KeepClip.App/KeepClip.App.csproj -c Release -p:Platform=x64 -o artifacts/publish-x64
 ```
 
 Chiudi l'app prima di ricompilare lo stesso percorso che stai eseguendo, per evitare file bloccati.
@@ -86,12 +86,12 @@ File e cartelle: Ctrl+C in Esplora file crea una card per l'intera selezione (fi
 
 Logo ufficiale: due fogli corallo e ambra con sfondo trasparente. Gli asset per eseguibile, finestre, area di notifica e MSIX sono inclusi nel progetto. Per rigenerarli dal master: `./scripts/Generate-AppIcons.ps1`. Vedi `branding/README.md` per dimensioni, provenienza e prompt.
 
-Verifica manuale: dopo aver chiuso la versione precedente, avvia `artifacts/publish-keepclip-x64/KeepClip.exe` e controlla l'icona nell'area di notifica, nell'header della cronologia e nella barra del titolo delle impostazioni. In Esplora file verifica l'icona dell'eseguibile; prova anche un fattore di scala dello schermo diverso dal 100%.
+Verifica manuale: dopo aver chiuso la versione precedente, avvia `artifacts/publish-keepclip-project-x64/KeepClip.exe` e controlla l'icona nell'area di notifica, nell'header della cronologia e nella barra del titolo delle impostazioni. In Esplora file verifica l'icona dell'eseguibile; prova anche un fattore di scala dello schermo diverso dal 100%.
 
 ## Cambio di nome
 
 KeepClip è il nuovo nome di ClipShelf. Il nome compare in finestre, notifiche, metadati Windows e pacchetto; l'eseguibile è `KeepClip.exe`. L'icona corallo e ambra resta quella scelta.
 
-Per conservare i dati e la compatibilità, restano la cartella portabile `%LOCALAPPDATA%\ClipShelf`, l'identità MSIX `ClipShelf.Personal` / `CN=ClipShelf`, gli identificatori di avvio e di istanza unica e i nomi interni dei progetti. La prenotazione di KeepClip e l'identità definitiva dello Store vanno configurate nella preparazione alla pubblicazione.
+Per conservare i dati e la compatibilità, restano la cartella portabile `%LOCALAPPDATA%\ClipShelf`, l'identità MSIX `ClipShelf.Personal` / `CN=ClipShelf`, gli identificatori di avvio e di istanza unica. Soluzione, progetti, cartelle e namespace ora usano KeepClip. La prenotazione di KeepClip e l'identità definitiva dello Store vanno configurate nella preparazione alla pubblicazione.
 
 Chiudi la versione precedente prima di avviare KeepClip. Se usi l'avvio automatico portabile, attivalo nelle impostazioni di questa versione e premi Salva impostazioni: il percorso registrato deve puntare a `KeepClip.exe` nella cartella che conserverai.

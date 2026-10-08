@@ -1,5 +1,5 @@
 # Generate a quiet 180 ms chime with smooth attack/release. Never plays the sound.
-param([string]$Output = (Join-Path $PSScriptRoot '../src/ClipShelf.App/Assets/Copy.wav'))
+param([string]$Output = (Join-Path $PSScriptRoot '../src/KeepClip.App/Assets/Copy.wav'))
 $rate = 44100; $duration = 0.18; $count = [int]($rate * $duration)
 $stream = [IO.File]::Create([IO.Path]::GetFullPath($Output))
 $writer = [IO.BinaryWriter]::new($stream)
