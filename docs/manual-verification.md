@@ -5,6 +5,7 @@
 - Primo build WinUI 3 Release x64: 0 errori, 0 avvisi.
 - Verifica automatica iniziale: **58/58 test superati**, inclusi recupero di database corrotto, backup fallito, pulizia dopo commit, generazione della cattura, sessione incolla, layout Win32 x64, selezioni consentite/escluse, avvisi di salvataggio e compatibilità delle impostazioni precedenti.
 - Aggiornamento 9 ottobre 2026 (provenienza e azioni per card): **142 test Core/Storage e 3 test STA superati**; publish Release x64 riuscito senza errori o avvisi. Le prove GUI di questa versione sono affidate all'utente.
+- Aggiornamento 9 ottobre 2026 (incolla nativo dei file): **153 test Core/Storage e 3 test STA superati**; prima compilazione Release x64 senza errori o avvisi. I test delle API native usano solo un backend simulato, senza accesso agli appunti del PC.
 - Prima generazione MSIX: riuscita, non firmata.
 - Applicazione avviata; l'utente ha mostrato le impostazioni in esecuzione.
 - Test 1 dell'utente: schede assenti. Diagnosi confermata dal file di impostazioni: `IsPaused=true`. Corretto il toggle ambiguo (ora acceso = cattura attiva). Ripetizione del test dopo abilitazione ancora da confermare.
@@ -109,3 +110,15 @@ Dopo aver chiuso la versione precedente, avvia `artifacts/publish-themes-fixed-x
 6. Scorri la lista senza cliccare una card, chiudi con Esc o clic fuori: nessun incolla. Apri con avviso visibile e con temi chiaro/scuro: header, anteprima, data e pulsanti devono essere interamente visibili, anche a DPI 150%.
 
 Test automatici: selezione del proprietario reale, ripiego dai processi intermediari di Windows, proprietario assente/inaccessibile, Esplora file, nessuna attribuzione a un intermediario senza un'app riconoscibile e abbinamento della sequenza alla notifica. La verifica reale di provenienza e incolla nelle app esterne è affidata all'utente; nessuna prova GUI è dichiarata superata per questa versione.
+
+## Incolla nativo dei file nelle chat
+
+1. Esci dalla vecchia KeepClip, estrai lo ZIP aggiornato e avvia la nuova KeepClip.exe. Nelle impostazioni controlla che la cattura sia attiva.
+2. Usa la stessa DLL di prova: Ctrl+C da Esplora file, focus nella chat e Ctrl+V diretto. Verifica che il file venga proposto come allegato; non serve inviare il messaggio.
+3. Con focus nella stessa chat, apri KeepClip con Ctrl+Shift+V e fai un clic sulla card del file: deve essere proposto lo stesso allegato. Ripeti in Teams e nell'app dell'agente AI. Il log deve riportare `kind=Files backend=native`, `stage=native-complete format=CF_HDROP` e `paste kind=Files outcome=InputSent failure=None`.
+4. Ripeti con PDF/TXT, un nome con accenti e una selezione di più file, se la chat li accetta anche con Ctrl+V diretto. Verifica in Esplora file una selezione contenente anche una cartella: tutti gli elementi devono essere copiati, senza spostare o eliminare gli originali.
+5. Dopo aver incollato dalla card, riapri KeepClip: l'operazione non deve creare una nuova voce né cambiare la provenienza della voce incollata. Il log di acquisizione deve riconoscere `own=True`.
+6. Per verificare la permanenza negli appunti, incolla dalla card in una cartella di prova, esci da KeepClip e incolla manualmente in un'altra cartella vuota: i file devono restare disponibili. Poi riavvia KeepClip.
+7. Ripeti il clic singolo su testo e immagini per controllare che continuino a funzionare.
+
+Un risultato `InputSent` conferma l'invio dei tasti, non l'accettazione dell'allegato da parte della chat. Se Ctrl+V diretto funziona ma la nuova versione ancora no, annota app e tipo di file per correlare il tentativo ai log.

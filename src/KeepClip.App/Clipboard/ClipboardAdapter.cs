@@ -10,7 +10,11 @@ namespace KeepClip.App.Clipboard;
 internal sealed class ClipboardAdapter : IClipboardAdapter
 {
     readonly ClipboardSourceTracker sourceTracker;
-    public ClipboardAdapter(ClipboardSourceTracker sourceTracker) => this.sourceTracker = sourceTracker;
+    readonly NativeFileClipboard nativeFiles;
+    public ClipboardAdapter(ClipboardSourceTracker sourceTracker, Func<nint> ownerWindow)
+    {
+        this.sourceTracker = sourceTracker; nativeFiles = new(ownerWindow);
+    }
     const string PrivateFormat = "ClipShelf.Owner.v1";
     readonly string owner = Guid.NewGuid().ToString("N");
     readonly AsyncClipboardContentReader reader = new(
@@ -19,6 +23,8 @@ internal sealed class ClipboardAdapter : IClipboardAdapter
     public async Task<ClipboardSnapshot?> ReadAsync(CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested(); var sequence = NativeMethods.GetClipboardSequenceNumber();
+        if (nativeFiles.ReadToken() is { } fileToken && fileToken.StartsWith(owner + ":", StringComparison.Ordinal))
+            return new(new(ClipKind.Files), sequence, true);
 
         var context = sourceTracker.ForSequence(sequence);
         // Never sample foreground after an asynchronous read: focus may have moved.
@@ -84,6 +90,20 @@ internal sealed class ClipboardAdapter : IClipboardAdapter
     public async Task WriteIfCurrentAsync(ClipContent content, Guid operationId, Func<bool> isCurrent, CancellationToken ct = default)
     {
         var expectedSequence = NativeMethods.GetClipboardSequenceNumber();
+        if (content.Kind == ClipKind.Files)
+        {
+            if (!FileReferences.Valid(content.Files)) throw new InvalidDataException("Selezione di file non valida.");
+            if (!await Task.Run(() => FileReferences.Available(content.Files!), ct)) throw new IOException("Uno o più file originali non sono più disponibili o accessibili.");
+            DiagnosticLog.Write($"clipboard-write begin operation={operationId:N} kind=Files backend=native count={content.Files!.Count}");
+            try { await nativeFiles.WriteAsync(content.Files, owner + ":" + operationId.ToString("N"), expectedSequence, isCurrent, ct); }
+            catch (Exception ex)
+            {
+                DiagnosticLog.Write($"clipboard-write stage=native-error operation={operationId:N} type={ex.GetType().Name} hresult=0x{ex.HResult:X8}");
+                throw;
+            }
+            DiagnosticLog.Write($"clipboard-write stage=native-complete operation={operationId:N} format=CF_HDROP sequence={NativeMethods.GetClipboardSequenceNumber()}");
+            return;
+        }
         ct.ThrowIfCancellationRequested(); var package = new DataPackage { RequestedOperation = DataPackageOperation.Copy };
         package.SetData(PrivateFormat, owner + ":" + operationId.ToString("N"));
         using var stream = new InMemoryRandomAccessStream();
@@ -94,33 +114,12 @@ internal sealed class ClipboardAdapter : IClipboardAdapter
             using (var writer = new DataWriter(stream.GetOutputStreamAt(0))) { writer.WriteBytes(content.Png); await writer.StoreAsync(); await writer.FlushAsync(); writer.DetachStream(); }
             stream.Seek(0); package.SetBitmap(RandomAccessStreamReference.CreateFromStream(stream));
         }
-        else if (content.Kind == ClipKind.Files)
-        {
-            if (!FileReferences.Valid(content.Files)) throw new InvalidDataException("Selezione di file non valida.");
-            var items = new List<IStorageItem>();
-            foreach (var file in content.Files!)
-            {
-                ct.ThrowIfCancellationRequested();
-                try
-                {
-                    IStorageItem item = file.IsDirectory
-                        ? await StorageFolder.GetFolderFromPathAsync(file.Path)
-                        : await StorageFile.GetFileFromPathAsync(file.Path);
-                    items.Add(item);
-                }
-                catch (Exception ex) when (ex is not OperationCanceledException)
-                {
-                    throw new IOException("Uno o più file originali non sono più disponibili o accessibili.", ex);
-                }
-            }
-            package.SetStorageItems(items, readOnly: false);
-        }
         else throw new InvalidDataException("Tipo di contenuto non supportato.");
         ct.ThrowIfCancellationRequested();
         DiagnosticLog.Write($"clipboard-write begin operation={operationId:N} kind={content.Kind}");
         try
         {
-            // Preparing an image or resolving files may await external providers.
+            // Preparing an image may await external providers.
             // Do not replace a copy made while that preparation was in progress.
             if (!isCurrent()) throw new ClipboardRequestCancelledException();
             if (NativeMethods.GetClipboardSequenceNumber() != expectedSequence) throw new ClipboardWriteSupersededException();

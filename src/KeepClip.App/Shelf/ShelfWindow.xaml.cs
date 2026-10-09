@@ -115,10 +115,14 @@ public sealed partial class ShelfWindow : Window
             if (!session.IsCurrent(request)) return;
             continuation = request;
             var result = await paste.PasteAsync(content, request.Destination, canContinue: () => continuation is { } current && session.IsCurrent(current));
-            DiagnosticLog.Write($"paste outcome={result.Outcome} failure={result.Failure}");
+            DiagnosticLog.Write($"paste kind={entry.Kind} outcome={result.Outcome} failure={result.Failure}");
             if (result.Message is not null) Notification?.Invoke(result.Message);
         }
-        catch (Exception) { ShowMessage("Impossibile copiare questo elemento. Verifica che il contenuto sia ancora disponibile."); Notification?.Invoke("Impossibile copiare l'elemento selezionato."); }
+        catch (Exception ex)
+        {
+            DiagnosticLog.Write($"paste-error kind={entry.Kind} type={ex.GetType().Name} hresult=0x{ex.HResult:X8}");
+            ShowMessage("Impossibile copiare questo elemento. Verifica che il contenuto sia ancora disponibile."); Notification?.Invoke("Impossibile copiare l'elemento selezionato.");
+        }
         finally { continuation = null; busy = false; }
     }
     async Task MutateAsync(Func<Task> action)

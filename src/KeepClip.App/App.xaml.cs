@@ -29,7 +29,7 @@ public partial class App : Application
         {
             try { dataPath = Windows.Storage.ApplicationData.Current.LocalFolder.Path; }
             catch { dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ClipShelf"); }
-            DiagnosticLog.DirectoryPath = dataPath; DiagnosticLog.Write("app-start diagnostics=source-attribution-v1");
+            DiagnosticLog.DirectoryPath = dataPath; DiagnosticLog.Write("app-start diagnostics=native-file-paste-v1");
             startupStage = "settings";
             settingsStore = new(dataPath); string? startupError = null;
             try { settings = await settingsStore.LoadAsync(); } catch { startupError = "Impostazioni non leggibili. Sono stati usati i valori predefiniti."; }
@@ -39,7 +39,7 @@ public partial class App : Application
             startupStage = "foreground-tracker"; foreground = new();
             startupStage = "clipboard-service";
             var sources = new ClipboardSourceTracker();
-            clipboard = new(new ClipboardAdapter(sources), new StaClipboardExecutor(), NativeMethods.GetClipboardSequenceNumber);
+            clipboard = new(new ClipboardAdapter(sources, () => messages?.Handle ?? 0), new StaClipboardExecutor(), NativeMethods.GetClipboardSequenceNumber);
             startupStage = "shelf-window"; shelf = new(history, clipboard);
             startupStage = "shelf-theme";
             shelf.ApplyAppearance(settings.Appearance);
