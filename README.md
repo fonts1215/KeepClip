@@ -4,7 +4,7 @@ MVP personale per la cronologia degli appunti, scritto in C# / WinUI 3. Windows 
 
 ## Avvio rapido
 
-La versione aggiornata pronta all'uso è in `artifacts/publish-keepclip-project-x64/KeepClip.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. È autonoma e non richiede di installare .NET o Windows App Runtime separatamente.
+La versione aggiornata pronta all'uso è in `artifacts/publish-async-clipboard-x64/KeepClip.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. È autonoma e non richiede di installare .NET o Windows App Runtime separatamente.
 
 Per usare la versione portabile ZIP, estrai tutti i file in una cartella stabile prima di avviare l'eseguibile. Non avviarlo direttamente dentro lo ZIP.
 
@@ -49,6 +49,7 @@ Requisiti: .NET SDK 10.0.401 e Windows SDK, con strumenti WinUI/XAML disponibili
 ```powershell
 dotnet restore KeepClip.slnx --locked-mode
 dotnet test tests/KeepClip.Tests --no-restore
+dotnet test tests/KeepClip.Windows.Tests --no-restore
 dotnet build src/KeepClip.App/KeepClip.App.csproj -c Release -p:Platform=x64
 dotnet publish src/KeepClip.App/KeepClip.App.csproj -c Release -p:Platform=x64 -o artifacts/publish-x64
 ```
@@ -56,6 +57,14 @@ dotnet publish src/KeepClip.App/KeepClip.App.csproj -c Release -p:Platform=x64 -
 Per aggiornare una dipendenza, modifica la sua versione in `Directory.Packages.props`, esegui `dotnet restore KeepClip.slnx --force-evaluate` e includi nel commit i lock file aggiornati. Il restore in modalità bloccata verifica che le dipendenze corrispondano ai lock file.
 
 Chiudi l'app prima di ricompilare lo stesso percorso che stai eseguendo, per evitare file bloccati.
+
+### Servizio asincrono degli appunti
+
+L'app usa un unico `AsyncClipboardService` per cattura, copia alla selezione e incolla. La coda serializza le operazioni e un dispatcher STA dedicato esegue le chiamate Windows fuori dal thread della finestra. Una scrittura in attesa viene annullata se gli appunti cambiano o la richiesta non è più valida (nuovo gesto, cambio di focus, pausa o chiusura del pannello). Il controllo viene ripetuto subito prima di pubblicare il contenuto, anche dopo la preparazione di immagini e file. La chiusura cancella le richieste pendenti; le chiamate Windows già in corso terminano prima di liberare la coda.
+
+La libreria [AsyncWindowsClipboard](https://github.com/undergroundwires/AsyncWindowsClipboard), distribuita come NuGet `AsyncClipboardService` 1.7.1 e fissata in `Directory.Packages.props`, legge testo e liste di file. Se la lettura fallisce, non restituisce dati o produce una lista non valida, il servizio usa la lettura Windows. Le immagini restano gestite dalle API Windows. Anche le scritture usano Windows per pubblicare insieme contenuto e identificatore privato: questo conserva il riconoscimento delle copie dell'app e il controllo dei ritentativi di Flush. La libreria non supporta direttamente immagini o questa scrittura di più formati.
+
+I test del servizio usano backend simulati, senza leggere o modificare gli appunti del PC. La verifica nelle applicazioni esterne resta manuale.
 
 ## MSIX
 
@@ -88,7 +97,7 @@ File e cartelle: Ctrl+C in Esplora file crea una card per l'intera selezione (fi
 
 Logo ufficiale: due fogli corallo e ambra con sfondo trasparente. Gli asset per eseguibile, finestre, area di notifica e MSIX sono inclusi nel progetto. Per rigenerarli dal master: `./scripts/Generate-AppIcons.ps1`. Vedi `branding/README.md` per dimensioni, provenienza e prompt.
 
-Verifica manuale: dopo aver chiuso la versione precedente, avvia `artifacts/publish-keepclip-project-x64/KeepClip.exe` e controlla l'icona nell'area di notifica, nell'header della cronologia e nella barra del titolo delle impostazioni. In Esplora file verifica l'icona dell'eseguibile; prova anche un fattore di scala dello schermo diverso dal 100%.
+Verifica manuale: dopo aver chiuso la versione precedente, avvia `artifacts/publish-async-clipboard-x64/KeepClip.exe` e controlla l'icona nell'area di notifica, nell'header della cronologia e nella barra del titolo delle impostazioni. In Esplora file verifica l'icona dell'eseguibile; prova anche un fattore di scala dello schermo diverso dal 100%.
 
 ## Cambio di nome
 

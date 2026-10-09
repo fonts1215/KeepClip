@@ -2,6 +2,12 @@
   "version": 2,
   "dependencies": {
     "net10.0": {
+      "AsyncClipboardService": {
+        "type": "Direct",
+        "requested": "[1.7.1, )",
+        "resolved": "1.7.1",
+        "contentHash": "9jMkkVuNfd48+ElVajLkJTyKP5dXBwMqYfDS3qXz8EMiWaeTZ12AJHDbosDJvQBJRJetPuLQDaLuI6ZgVSI8Mw=="
+      },
       "Microsoft.NET.Test.Sdk": {
         "type": "Direct",
         "requested": "[17.14.1, )",

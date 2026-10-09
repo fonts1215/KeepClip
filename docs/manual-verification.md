@@ -62,3 +62,16 @@ Attiva la copia alla selezione e il suono nelle impostazioni. Queste prove manua
 5. Ripeti la prova 1 con un'immagine o un file negli appunti: la selezione nel campo non deve sostituirli; incollali poi in una destinazione compatibile.
 
 Il log registra `uia-blocked reason=editing-control` oppure `editable-text-range` e `readOnly=False`, senza leggere o registrare il testo del campo bloccato. Quando lo stato non è disponibile, misto o la lettura genera un errore, la copia viene saltata (`unconfirmed-read-only`, `unknown-control` o `unknown-provider`, `readOnly=unknown`): gli appunti restano invariati e puoi usare Ctrl+C. La copia automatica richiede che il testo sia dichiarato non modificabile dal controllo; questa prova verifica anche eventuali limiti delle app destinatarie.
+
+## Servizio asincrono e AsyncWindowsClipboard
+
+Queste prove richiedono la versione `artifacts/publish-async-clipboard-x64/KeepClip.exe` e restano affidate all'utente:
+
+1. Copia testo Unicode (accenti, emoji e caratteri non latini) da Blocco note e Teams. Controlla testo e provenienza nella card, quindi incolla in un documento di prova.
+2. Copia insieme un file e una cartella da Esplora file. Controlla che la card contenga entrambi e che l'incolla li copi tutti nella destinazione.
+3. Copia un'immagine con lo Strumento di cattura, poi incollala in un'app compatibile. Controlla anteprima e provenienza.
+4. Ripeti copia alla selezione e incolla dal pannello. Ogni copia deve comparire una sola volta; l'incolla di una card non deve generare una nuova cattura o un suono aggiuntivo.
+5. Durante l'acquisizione di un contenuto, usa hotkey, ricerca ed Esc: il pannello deve restare reattivo. Copia poi un altro contenuto: una scrittura precedente ancora in attesa deve essere annullata e lasciare gli appunti più recenti.
+6. Chiudi l'app mentre un'acquisizione è in corso, poi riavviala: nessuna richiesta della vecchia istanza deve completare una scrittura dopo la chiusura.
+
+Gli eventuali fallback della libreria sono registrati come `clipboard-library fallback`, solo con tipo di eccezione e HRESULT. I test del dispatcher STA usano delegati gestiti e non leggono, scrivono o svuotano gli appunti del PC.

@@ -10,7 +10,12 @@ public sealed class SelectionCopyCoordinator(IClipboardAdapter clipboard, Histor
             string.IsNullOrWhiteSpace(selection.Text) || selection.Text.Length > MaxCharacters || !isCurrent()) return false;
         var generation = history.CaptureGeneration;
         var content = new ClipContent(ClipKind.Text, selection.Text);
-        await clipboard.WriteAsync(content, Guid.NewGuid(), ct);
+        try
+        {
+            await clipboard.WriteIfCurrentAsync(content, Guid.NewGuid(),
+                () => enabled() && !history.IsPaused && history.CaptureGeneration == generation && isCurrent(), ct);
+        }
+        catch (ClipboardRequestCancelledException) { return false; }
         if (!enabled() || history.IsPaused || history.CaptureGeneration != generation || !isCurrent()) return false;
         CaptureResult result;
         try { result = await history.CaptureAsync(new(content, sequence(), CaptureGeneration: generation, Source: selection.Source), ct); }

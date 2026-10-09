@@ -11,8 +11,9 @@ internal sealed class ClipboardAdapter : IClipboardAdapter
 {
     const string PrivateFormat = "ClipShelf.Owner.v1";
     readonly string owner = Guid.NewGuid().ToString("N");
-
-
+    readonly AsyncClipboardContentReader reader = new(
+        new AsyncWindowsClipboard.WindowsClipboardService(TimeSpan.FromMilliseconds(200)),
+        onFallback: ex => DiagnosticLog.Write($"clipboard-library fallback type={ex.GetType().Name} hresult=0x{ex.HResult:X8}"));
     public async Task<ClipboardSnapshot?> ReadAsync(CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested(); var sequence = NativeMethods.GetClipboardSequenceNumber();
@@ -22,15 +23,19 @@ internal sealed class ClipboardAdapter : IClipboardAdapter
         if (view.Contains(PrivateFormat) && (await view.GetDataAsync(PrivateFormat)) is string token && token.StartsWith(owner + ":", StringComparison.Ordinal))
             return new(new(ClipKind.Text), sequence, true);
         ClipContent? content = null;
-        // Delayed rendering can block GetClipboardData. Keep the native clipboard
-        // transaction on one worker thread so the shelf and hotkey stay responsive.
-        var nativePng = view.Contains(StandardDataFormats.StorageItems) ? null : await Task.Run(NativeClipboardImage.ReadPng, ct);
+        // The service invokes this backend on its dedicated STA dispatcher.
+        var nativePng = view.Contains(StandardDataFormats.StorageItems) ? null : NativeClipboardImage.ReadPng();
         if (view.Contains(StandardDataFormats.StorageItems))
         {
-            var items = await view.GetStorageItemsAsync();
-            if (items.Count > FileReferences.MaxItems) throw new InvalidDataException("Puoi copiare fino a 1000 file o cartelle in una voce.");
-            var files = items.Select(item => new ClipFile(item.Path, item.IsOfType(StorageItemTypes.Folder))).ToArray();
-            if (!FileReferences.Valid(files)) throw new InvalidDataException("Sono supportati file e cartelle con un percorso disponibile sul dispositivo.");
+            async Task<IReadOnlyList<ClipFile>> WindowsFilesAsync()
+            {
+                var items = await view.GetStorageItemsAsync();
+                if (items.Count > FileReferences.MaxItems) throw new InvalidDataException("Puoi copiare fino a 1000 file o cartelle in una voce.");
+                var result = items.Select(item => new ClipFile(item.Path, item.IsOfType(StorageItemTypes.Folder))).ToArray();
+                if (!FileReferences.Valid(result)) throw new InvalidDataException("Sono supportati file e cartelle con un percorso disponibile sul dispositivo.");
+                return result;
+            }
+            var files = await reader.ReadFilesAsync(WindowsFilesAsync, ct);
             content = new(ClipKind.Files, Files:files);
         }
         else if (nativePng is not null)
@@ -45,7 +50,7 @@ internal sealed class ClipboardAdapter : IClipboardAdapter
             var reference = await view.GetBitmapAsync(); using var source = await reference.OpenReadAsync();
             content = new(ClipKind.Image, Png: await NormalizeImageAsync(source));
         }
-        else if (view.Contains(StandardDataFormats.Text)) content = new(ClipKind.Text, await view.GetTextAsync());
+        else if (view.Contains(StandardDataFormats.Text)) content = new(ClipKind.Text, await reader.ReadTextAsync(async () => await view.GetTextAsync(), ct));
         ct.ThrowIfCancellationRequested();
         var origin = content is null ? null : await SourceAppResolver.ResolveAsync(sourceProcess);
         ct.ThrowIfCancellationRequested();
@@ -69,8 +74,12 @@ internal sealed class ClipboardAdapter : IClipboardAdapter
             output.Seek(0); using var reader = new DataReader(output.GetInputStreamAt(0)); await reader.LoadAsync((uint)output.Size);
             var bytes = new byte[checked((int)output.Size)]; reader.ReadBytes(bytes); return bytes;
     }
-    public async Task WriteAsync(ClipContent content, Guid operationId, CancellationToken ct = default)
+    public Task WriteAsync(ClipContent content, Guid operationId, CancellationToken ct = default)
+        => WriteIfCurrentAsync(content, operationId, static () => true, ct);
+
+    public async Task WriteIfCurrentAsync(ClipContent content, Guid operationId, Func<bool> isCurrent, CancellationToken ct = default)
     {
+        var expectedSequence = NativeMethods.GetClipboardSequenceNumber();
         ct.ThrowIfCancellationRequested(); var package = new DataPackage { RequestedOperation = DataPackageOperation.Copy };
         package.SetData(PrivateFormat, owner + ":" + operationId.ToString("N"));
         using var stream = new InMemoryRandomAccessStream();
@@ -107,6 +116,10 @@ internal sealed class ClipboardAdapter : IClipboardAdapter
         DiagnosticLog.Write($"clipboard-write begin operation={operationId:N} kind={content.Kind}");
         try
         {
+            // Preparing an image or resolving files may await external providers.
+            // Do not replace a copy made while that preparation was in progress.
+            if (!isCurrent()) throw new ClipboardRequestCancelledException();
+            if (NativeMethods.GetClipboardSequenceNumber() != expectedSequence) throw new ClipboardWriteSupersededException();
             DiagnosticLog.Write($"clipboard-write stage=set-start operation={operationId:N}");
             WinClipboard.SetContent(package);
             DiagnosticLog.Write($"clipboard-write stage=set-complete operation={operationId:N} sequence={NativeMethods.GetClipboardSequenceNumber()}");

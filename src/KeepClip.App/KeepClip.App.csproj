@@ -23,9 +23,11 @@
   <ItemGroup>
     <FrameworkReference Include="Microsoft.WindowsDesktop.App.WPF"/>
     <Content Update="Assets/**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"/>
+    <Content Include="../../THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"/>
     <ProjectReference Include="../KeepClip.Core/KeepClip.Core.csproj"/>
     <ProjectReference Include="../KeepClip.Storage/KeepClip.Storage.csproj"/>
     <PackageReference Include="Microsoft.WindowsAppSDK"/>
+    <PackageReference Include="AsyncClipboardService"/>
     <PackageReference Include="CommunityToolkit.Mvvm"/>
   </ItemGroup>
 </Project>

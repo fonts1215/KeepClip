@@ -17,6 +17,7 @@ public partial class App : Application
     SettingsStore? settingsStore;
     ForegroundTracker? foreground;
     SelectionCopyService? selectionCopy;
+    AsyncClipboardService? clipboard;
     string dataPath = "";
     bool storageReady, shuttingDown;
     public App() { InitializeComponent(); UnhandledException += (_, e) => { e.Handled = true; Notify("Si è verificato un errore. Se persiste, riavvia KeepClip."); }; }
@@ -33,7 +34,8 @@ public partial class App : Application
             var repository = new SqliteHistoryRepository(dataPath); var images = new ImageStore(dataPath);
             history = new(repository, images.SaveAsync); history.SetPaused(settings.IsPaused);
             foreground = new();
-            var clipboard = new ClipboardAdapter(); shelf = new(history, clipboard);
+            clipboard = new(new ClipboardAdapter(), new StaClipboardExecutor(), NativeMethods.GetClipboardSequenceNumber);
+            shelf = new(history, clipboard);
             messages = new(); hotkey = new(messages); tray = new(messages) { Paused = settings.IsPaused };
             tray.Open += OpenShelf; tray.Settings += OpenSettings; tray.TogglePause += TogglePause; tray.Exit += Shutdown;
             tray.Show(); shelf.SettingsRequested += OpenSettings; shelf.Notification += Notify; hotkey.Invoked += OpenShelf;
@@ -118,6 +120,6 @@ public partial class App : Application
     void Shutdown()
     {
         if (shuttingDown) return; shuttingDown = true;
-        selectionCopy?.Dispose(); foreground?.Dispose(); monitor?.Dispose(); hotkey?.Dispose(); tray?.Dispose(); messages?.Dispose(); settingsWindow?.Close(); shelf?.ExitWindow(); instance.Dispose(); Exit();
+        selectionCopy?.Dispose(); foreground?.Dispose(); monitor?.Dispose(); clipboard?.Dispose(); hotkey?.Dispose(); tray?.Dispose(); messages?.Dispose(); settingsWindow?.Close(); shelf?.ExitWindow(); instance.Dispose(); Exit();
     }
 }

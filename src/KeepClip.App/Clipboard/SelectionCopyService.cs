@@ -28,7 +28,7 @@ internal sealed class SelectionCopyService(DispatcherQueue dispatcher, HistorySe
     }
     public void Stop()
     {
-        version++; pressed = false; lastDownTime = 0; pending = null; lifetime?.Cancel(); lifetime?.Dispose(); lifetime = null;
+        Interlocked.Increment(ref version); pressed = false; lastDownTime = 0; pending = null; lifetime?.Cancel(); lifetime?.Dispose(); lifetime = null;
         if (hook != 0) { NativeMethods.UnhookWindowsHookEx(hook); hook = 0; }
         GC.KeepAlive(mouseCallback);
     }
@@ -43,7 +43,7 @@ internal sealed class SelectionCopyService(DispatcherQueue dispatcher, HistorySe
                 {
                     if (message == 0x0201)
                     {
-                        version++; pending = null; down = mouse.Point; downSequence = NativeMethods.GetClipboardSequenceNumber(); pressed = true;
+                        Interlocked.Increment(ref version); pending = null; down = mouse.Point; downSequence = NativeMethods.GetClipboardSequenceNumber(); pressed = true;
                         var now = Environment.TickCount64;
                         doubleClick = lastDownTime != 0 && now - lastDownTime <= NativeMethods.GetDoubleClickTime() && Math.Abs(down.X - previousDown.X) <= 4 && Math.Abs(down.Y - previousDown.Y) <= 4;
                         lastDownTime = now; previousDown = down;
@@ -57,7 +57,7 @@ internal sealed class SelectionCopyService(DispatcherQueue dispatcher, HistorySe
                         var window = NativeMethods.GetForegroundWindow(); NativeMethods.GetWindowThreadProcessId(window, out var process);
                         if ((drag || doubleClick || shift) && !modifiers && process != 0 && process != Environment.ProcessId && lifetime is not null)
                         {
-                            var request = new Request(mouse.Point, down, window, downSequence, history.CaptureGeneration, ++version, lifetime.Token);
+                            var request = new Request(mouse.Point, down, window, downSequence, history.CaptureGeneration, Interlocked.Increment(ref version), lifetime.Token);
                             dispatcher.TryEnqueue(() =>
                             {
                                 if (!Current(request)) { DiagnosticLog.Write($"selection-discard request={request.Version} stage=queue reason={InvalidReason(request)}"); return; }
@@ -72,12 +72,12 @@ internal sealed class SelectionCopyService(DispatcherQueue dispatcher, HistorySe
         catch { /* Never let an exception cross the native callback boundary. */ }
         return NativeMethods.CallNextHookEx(hook, code, message, data);
     }
-    bool Current(Request request) => !request.Token.IsCancellationRequested && request.Version == version && enabled() &&
+    bool Current(Request request) => !request.Token.IsCancellationRequested && request.Version == Volatile.Read(ref version) && enabled() &&
         !history.IsPaused && history.CaptureGeneration == request.Generation && NativeMethods.GetForegroundWindow() == request.Window;
     string InvalidReason(Request request, bool checkClipboard = false)
     {
         if (request.Token.IsCancellationRequested) return "stopped";
-        if (request.Version != version) return "new-gesture";
+        if (request.Version != Volatile.Read(ref version)) return "new-gesture";
         if (!enabled()) return "disabled-or-not-ready";
         if (history.IsPaused || history.CaptureGeneration != request.Generation) return "capture-state-changed";
         if (NativeMethods.GetForegroundWindow() != request.Window) return "foreground-changed";

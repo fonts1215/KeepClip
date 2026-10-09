@@ -13,5 +13,6 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/KeepClip.Tests/KeepClip.Tests.csproj" />
+    <Project Path="tests/KeepClip.Windows.Tests/KeepClip.Windows.Tests.csproj" />
   </Folder>
 </Solution>

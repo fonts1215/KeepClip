@@ -35,7 +35,7 @@ internal sealed class ClipboardMonitor : IDisposable
                 if (history.IsPaused) continue;
                 try
                 {
-                    var snapshot = await ClipboardReader.ReadWithRetryAsync(adapter, lifetime.Token);
+                    var snapshot = await adapter.ReadAsync(lifetime.Token);
                     if (snapshot is not null)
                     {
                         var result = await history.CaptureAsync(snapshot with { CaptureGeneration = generation }, lifetime.Token);

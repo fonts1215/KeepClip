@@ -8,11 +8,13 @@
     <ProjectReference Include="../../src/KeepClip.Core/KeepClip.Core.csproj"/>
     <ProjectReference Include="../../src/KeepClip.Storage/KeepClip.Storage.csproj"/>
     <PackageReference Include="Microsoft.NET.Test.Sdk"/>
+    <PackageReference Include="AsyncClipboardService"/>
     <PackageReference Include="xunit"/>
     <PackageReference Include="xunit.runner.visualstudio"/>
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit"/>
     <Compile Include="../../src/KeepClip.App/Interop/NativeMethods.cs" Link="Interop/NativeMethods.cs"/>
+    <Compile Include="../../src/KeepClip.App/Clipboard/AsyncClipboardContentReader.cs" Link="Clipboard/AsyncClipboardContentReader.cs"/>
   </ItemGroup>
 </Project>

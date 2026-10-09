@@ -8,16 +8,17 @@ public interface IPasteInput
 {
     Task<bool> WaitForModifiersReleasedAsync(TimeSpan timeout, CancellationToken ct); bool SendPaste();
 }
-public enum PasteOutcome { InputSent, CopiedOnly }
+public enum PasteOutcome { InputSent, CopiedOnly, Cancelled }
 public enum PasteFailure { None, MissingDestination, ActivationRejected, ModifiersHeld, FocusChanged, InputRejected, TimedOut, Cancelled }
 public sealed record PasteResult(PasteOutcome Outcome, string? Message = null, PasteFailure Failure = PasteFailure.None);
 public sealed class PasteCoordinator(IClipboardAdapter clipboard, IWindowTarget target, IPasteInput input, Action hide)
 {
     public async Task<PasteResult> PasteAsync(ClipContent content, nint destination, CancellationToken ct = default, Func<bool>? canContinue = null)
     {
-        await clipboard.WriteAsync(content, Guid.NewGuid(), ct);
         bool Cancelled() => canContinue is not null && !canContinue();
         PasteResult CancelledResult() => new(PasteOutcome.CopiedOnly, Failure: PasteFailure.Cancelled);
+        try { await clipboard.WriteIfCurrentAsync(content, Guid.NewGuid(), () => !Cancelled(), ct); }
+        catch (ClipboardRequestCancelledException) { return new(PasteOutcome.Cancelled, Failure: PasteFailure.Cancelled); }
         ct.ThrowIfCancellationRequested();
         if (Cancelled()) return CancelledResult();
         hide();
