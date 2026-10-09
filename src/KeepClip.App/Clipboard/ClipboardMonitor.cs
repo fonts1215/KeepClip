@@ -5,13 +5,15 @@ namespace KeepClip.App.Clipboard;
 internal sealed class ClipboardMonitor : IDisposable
 {
     readonly MessageWindow window; readonly IClipboardAdapter adapter; readonly HistoryService history;
+    readonly ClipboardSourceTracker sources;
     readonly CancellationTokenSource lifetime = new();
     bool reading, pending;
     public event Action<string>? Problem;
     public event Action? Copied;
-    public ClipboardMonitor(MessageWindow window, IClipboardAdapter adapter, HistoryService history)
+    public ClipboardMonitor(MessageWindow window, IClipboardAdapter adapter, HistoryService history, ClipboardSourceTracker sources)
     {
         this.window = window; this.adapter = adapter; this.history = history;
+        this.sources = sources;
         if (!NativeMethods.AddClipboardFormatListener(window.Handle)) throw new Win32Exception();
         DiagnosticLog.Write("listener-registered");
         window.Message += OnMessage;
@@ -21,6 +23,11 @@ internal sealed class ClipboardMonitor : IDisposable
         if (message != NativeMethods.WM_CLIPBOARDUPDATE) return;
         DiagnosticLog.Write($"clipboard-notification paused={history.IsPaused}");
         if (history.IsPaused) return;
+        // Capture origin before starting the STA queue or awaiting delayed data.
+        var sequence = NativeMethods.GetClipboardSequenceNumber();
+        var owner = SourceAppResolver.ClipboardProcess();
+        var foreground = SourceAppResolver.ForegroundProcess();
+        if (sequence == NativeMethods.GetClipboardSequenceNumber()) sources.Record(new(sequence, owner, foreground));
         pending = true; if (!reading) ReadPending();
     }
     async void ReadPending()

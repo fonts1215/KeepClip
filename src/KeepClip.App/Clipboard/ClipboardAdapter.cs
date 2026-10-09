@@ -9,6 +9,8 @@ using WinClipboard = Windows.ApplicationModel.DataTransfer.Clipboard;
 namespace KeepClip.App.Clipboard;
 internal sealed class ClipboardAdapter : IClipboardAdapter
 {
+    readonly ClipboardSourceTracker sourceTracker;
+    public ClipboardAdapter(ClipboardSourceTracker sourceTracker) => this.sourceTracker = sourceTracker;
     const string PrivateFormat = "ClipShelf.Owner.v1";
     readonly string owner = Guid.NewGuid().ToString("N");
     readonly AsyncClipboardContentReader reader = new(
@@ -18,7 +20,9 @@ internal sealed class ClipboardAdapter : IClipboardAdapter
     {
         ct.ThrowIfCancellationRequested(); var sequence = NativeMethods.GetClipboardSequenceNumber();
 
-        var sourceProcess = SourceAppResolver.ClipboardProcess();
+        var context = sourceTracker.ForSequence(sequence);
+        // Never sample foreground after an asynchronous read: focus may have moved.
+        var sourceProcess = context?.OwnerProcess ?? SourceAppResolver.ClipboardProcess();
         var view = WinClipboard.GetContent();
         if (view.Contains(PrivateFormat) && (await view.GetDataAsync(PrivateFormat)) is string token && token.StartsWith(owner + ":", StringComparison.Ordinal))
             return new(new(ClipKind.Text), sequence, true);
@@ -52,7 +56,7 @@ internal sealed class ClipboardAdapter : IClipboardAdapter
         }
         else if (view.Contains(StandardDataFormats.Text)) content = new(ClipKind.Text, await reader.ReadTextAsync(async () => await view.GetTextAsync(), ct));
         ct.ThrowIfCancellationRequested();
-        var origin = content is null ? null : await SourceAppResolver.ResolveAsync(sourceProcess);
+        var origin = content is null ? null : await SourceAppResolver.ResolveClipboardAsync(sourceProcess, context?.ForegroundProcess ?? 0);
         ct.ThrowIfCancellationRequested();
         // A delayed producer can change the clipboard while its data is being materialized.
         if (content is not null && sequence != NativeMethods.GetClipboardSequenceNumber())

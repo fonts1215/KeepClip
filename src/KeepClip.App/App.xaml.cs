@@ -29,7 +29,7 @@ public partial class App : Application
         {
             try { dataPath = Windows.Storage.ApplicationData.Current.LocalFolder.Path; }
             catch { dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ClipShelf"); }
-            DiagnosticLog.DirectoryPath = dataPath; DiagnosticLog.Write("app-start diagnostics=themes-startup-v1");
+            DiagnosticLog.DirectoryPath = dataPath; DiagnosticLog.Write("app-start diagnostics=source-attribution-v1");
             startupStage = "settings";
             settingsStore = new(dataPath); string? startupError = null;
             try { settings = await settingsStore.LoadAsync(); } catch { startupError = "Impostazioni non leggibili. Sono stati usati i valori predefiniti."; }
@@ -38,7 +38,8 @@ public partial class App : Application
             history = new(repository, images.SaveAsync); history.SetPaused(settings.IsPaused);
             startupStage = "foreground-tracker"; foreground = new();
             startupStage = "clipboard-service";
-            clipboard = new(new ClipboardAdapter(), new StaClipboardExecutor(), NativeMethods.GetClipboardSequenceNumber);
+            var sources = new ClipboardSourceTracker();
+            clipboard = new(new ClipboardAdapter(sources), new StaClipboardExecutor(), NativeMethods.GetClipboardSequenceNumber);
             startupStage = "shelf-window"; shelf = new(history, clipboard);
             startupStage = "shelf-theme";
             shelf.ApplyAppearance(settings.Appearance);
@@ -51,7 +52,7 @@ public partial class App : Application
             try { await history.InitializeAsync(); storageReady = true; }
             catch (Exception ex) { startupError = ex is HistoryStorageException ? ex.Message : "Impossibile aprire la cronologia. Controlla la cartella dati nelle impostazioni."; history.SetPaused(true); }
             startupStage = "capture-services";
-            monitor = new(messages, clipboard, history); monitor.Problem += Notify; monitor.Copied += OnCopied;
+            monitor = new(messages, clipboard, history, sources); monitor.Problem += Notify; monitor.Copied += OnCopied;
             var selectionCoordinator = new SelectionCopyCoordinator(clipboard, history, () => settings.CopyOnSelection, NativeMethods.GetClipboardSequenceNumber, OnCopied, Notify);
             selectionCopy = new(Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread(), history, selectionCoordinator, () => settings.CopyOnSelection && storageReady && !history.IsPaused);
             selectionCopy.Problem += Notify;

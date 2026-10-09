@@ -10,15 +10,15 @@
     </Grid>
     <InfoBar x:Name="Status" Grid.Row="1" IsOpen="False" Severity="Informational" IsClosable="True"/>
     <Grid Grid.Row="2">
-      <GridView x:Name="Cards" Height="260" Padding="0" VerticalAlignment="Top" ItemsSource="{Binding Entries}" SelectedItem="{Binding SelectedEntry, Mode=TwoWay}" SelectionMode="Single" IsItemClickEnabled="True" ItemClick="Cards_ItemClick" DoubleTapped="Cards_DoubleTapped" ScrollViewer.HorizontalScrollMode="Enabled" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollMode="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled">
+      <GridView x:Name="Cards" Height="296" Padding="0" VerticalAlignment="Top" ItemsSource="{Binding Entries}" SelectedItem="{Binding SelectedEntry, Mode=TwoWay}" SelectionMode="Single" IsItemClickEnabled="False" ScrollViewer.HorizontalScrollMode="Enabled" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollMode="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled">
         <GridView.ItemContainerStyle><Style TargetType="GridViewItem"><Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="0,0,12,0"/><Setter Property="VerticalAlignment" Value="Top"/></Style></GridView.ItemContainerStyle>
         <GridView.ItemsPanel><ItemsPanelTemplate><ItemsWrapGrid Orientation="Vertical" MaximumRowsOrColumns="1"/></ItemsPanelTemplate></GridView.ItemsPanel>
-        <GridView.ItemTemplate><DataTemplate><local:ClipCard/></DataTemplate></GridView.ItemTemplate>
+        <GridView.ItemTemplate><DataTemplate><local:ClipCard PasteRequested="Card_PasteRequested" PinRequested="Card_PinRequested" DeleteRequested="Card_DeleteRequested"/></DataTemplate></GridView.ItemTemplate>
       </GridView>
       <StackPanel x:Name="EmptyState" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8"><FontIcon Glyph="&#xE8C8;" FontSize="30" Foreground="{ThemeResource KeepClipAccentTextBrush}"/><TextBlock x:Name="EmptyText" Text="Copia qualcosa per iniziare" FontSize="18" Foreground="{ThemeResource KeepClipTextBrush}"/><TextBlock Text="Testo, immagini e file saranno disponibili qui." Foreground="{ThemeResource KeepClipSecondaryTextBrush}"/></StackPanel>
     </Grid>
     <Grid Grid.Row="3"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-      <StackPanel Orientation="Horizontal" Spacing="8"><Button Content="Incolla" Style="{StaticResource AccentButtonStyle}" Click="Paste_Click"/><Button Content="★ Preferito" Click="Pin_Click"/><Button Content="Elimina" Click="Delete_Click"/><Button Content="Svuota…" Click="Clear_Click"/></StackPanel>
+      <Button Content="Svuota…" Click="Clear_Click" HorizontalAlignment="Left"/>
       <TextBlock x:Name="CountLabel" Grid.Column="1" VerticalAlignment="Center" Foreground="{ThemeResource KeepClipSecondaryTextBrush}"/>
     </Grid>
   </Grid>

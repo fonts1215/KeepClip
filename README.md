@@ -4,7 +4,7 @@ MVP personale per la cronologia degli appunti, scritto in C# / WinUI 3. Windows 
 
 ## Avvio rapido
 
-La versione aggiornata pronta all'uso è in `artifacts/publish-themes-fixed-x64/KeepClip.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. È autonoma e non richiede di installare .NET o Windows App Runtime separatamente.
+La versione aggiornata pronta all'uso è in `artifacts/publish-card-actions-x64/KeepClip.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. È autonoma e non richiede di installare .NET o Windows App Runtime separatamente.
 
 Per usare la versione portabile ZIP, estrai tutti i file in una cartella stabile prima di avviare l'eseguibile. Non avviarlo direttamente dentro lo ZIP.
 
@@ -22,9 +22,9 @@ Nelle impostazioni puoi regolare il volume del suono da 0 a 100% e ascoltarlo co
 
 - Copia testo, immagini, file o cartelle con i normali comandi dell'app che stai usando.
 - Premi **Ctrl+Shift+V**: la cronologia compare vicino al bordo inferiore del monitor.
-- Fai doppio clic su una scheda o selezionala e premi **Invio**: KeepClip torna alla finestra precedente e invia Ctrl+V.
+- Fai **un clic sull'anteprima o sull'header** di una scheda: KeepClip torna alla finestra da cui hai aperto il pannello e invia Ctrl+V. In alternativa, seleziona con le frecce e premi **Invio**.
 - **Esc** chiude il pannello senza incollare. La cattura continua in background.
-- Un clic seleziona la scheda. Usa i pulsanti in basso per incollare, fissare o eliminare la voce selezionata.
+- Ogni card ha i propri pulsanti **☆ Preferito / ★ Fissato** ed **Elimina**: agiscono su quella copia senza incollare o chiudere il pannello. Anche Invio sul pulsante esegue solo la sua azione.
 - Cerca nel testo o nei nomi dei file; il filtro **★ Preferiti** mostra solo gli elementi fissati. Non è previsto OCR delle immagini.
 - **Svuota…** conserva i preferiti salvo scelta esplicita di includerli.
 
@@ -84,7 +84,9 @@ Vedi `docs/manual-verification.md`. I test automatici verificano cronologia, per
 
 Windows può impedire l'incolla verso un processo elevato: l'elemento resta copiato e l'app propone Ctrl+V manuale. La destinazione deve accettare il tipo di contenuto scelto. L'accettazione di SendInput non dimostra che l'app esterna abbia incollato il contenuto.
 
-Le card mostrano nome e icona locale del programma proprietario degli appunti, quando Windows li rende disponibili. La provenienza viene salvata per testo e immagini, anche con la copia su selezione. Le vecchie voci mostrano Origine sconosciuta; ricopiando un contenuto si aggiorna la sua provenienza. Verifica manuale: copia da Blocco note e da un browser, controlla le card e riavvia KeepClip per verificare che nome e icona restino presenti.
+Le card mostrano nome e icona locale del programma da cui proviene la copia. Il proprietario degli appunti ha priorità; se è assente o è un intermediario di Windows, si usa l'app in primo piano rilevata alla notifica della copia, abbinata alla stessa sequenza degli appunti. Il percorso dell'eseguibile si legge con permessi limitati, anche nella versione portable. Per le app con pacchetto, un errore nel caricamento del logo non elimina il nome già riconosciuto. Il riconoscimento resta una stima nei casi intermediati: una copia in background senza proprietario può essere attribuita all'app attiva. Se non ci sono informazioni utilizzabili, resta «Origine sconosciuta».
+
+La provenienza viene salvata per testo, immagini e file, anche con la copia su selezione. Le voci già salvate non vengono corrette retroattivamente: ricopiando un contenuto si aggiorna la sua provenienza. Il log `diagnostic.log` contiene `source-identity`, `source-attribution` ed eventuali `source-error`, con PID, nome processo, disponibilità del percorso/logo e codici di errore; non registra testo copiato, percorsi o titoli delle finestre.
 
 Le card hanno un header con icona da 40 px e nome del programma, anteprima separata e data nel footer. Il suono opzionale è un chime morbido da 180 ms. La selezione usa il punto iniziale e finale del trascinamento, l'albero UIA completo e un fallback sul focus limitato allo stesso documento testuale; tre tentativi gestiscono la selezione tardiva, annullandosi se cambiano appunti, focus o gesto. Verifica manualmente trascinamento e doppio clic in ChatGPT e Teams desktop, anche terminando nel margine del messaggio. Se un controllo non espone la selezione a UI Automation, usa Ctrl+C: il log diagnostic.log contiene tentativi/esito senza testo.
 

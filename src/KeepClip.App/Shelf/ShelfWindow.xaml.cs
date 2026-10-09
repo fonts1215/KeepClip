@@ -9,6 +9,7 @@ using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Windows.Graphics;
 using Windows.System;
@@ -57,7 +58,7 @@ public sealed partial class ShelfWindow : Window
     void OnHistoryChanged() => DispatcherQueue.TryEnqueue(() => { model.Refresh(history.Entries); UpdateCount(); });
     void UpdateCount()
     {
-        CountLabel.Text = $"{history.Entries.Count}/200 · Invio incolla · Esc chiude";
+        CountLabel.Text = $"{history.Entries.Count}/200 · Clic o Invio incolla · Esc chiude";
         EmptyState.Visibility = model.Entries.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         EmptyText.Text = history.Entries.Count == 0 ? "Copia qualcosa per iniziare" : "Nessun elemento trovato";
     }
@@ -95,15 +96,7 @@ public sealed partial class ShelfWindow : Window
     public void ShowMessage(string message) { Status.Message = message; Status.IsOpen = true; }
     public void ExitWindow() { exiting = true; outsideClicks.Dispose(); history.HistoryChanged -= OnHistoryChanged; Close(); }
     void Settings_Click(object sender, RoutedEventArgs e) { Hide(); SettingsRequested?.Invoke(); }
-    void Cards_ItemClick(object sender, ItemClickEventArgs e) { if (e.ClickedItem is ClipEntry entry) model.SelectedEntry = entry; }
-    async void Cards_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
-    {
-        if (e.OriginalSource is FrameworkElement { DataContext: ClipEntry entry })
-        {
-            e.Handled = true; model.SelectedEntry = entry; await PasteAsync(entry);
-        }
-    }
-    async void Paste_Click(object sender, RoutedEventArgs e) { if (model.SelectedEntry is { } entry) await PasteAsync(entry); }
+    async void Card_PasteRequested(object? sender, ClipCardEventArgs e) { model.SelectedEntry = e.Entry; await PasteAsync(e.Entry); }
     async Task PasteAsync(ClipEntry entry)
     {
         if (busy) return; busy = true;
@@ -133,8 +126,8 @@ public sealed partial class ShelfWindow : Window
         if (busy) return; busy = true;
         try { await action(); } catch { ShowMessage("Impossibile salvare la modifica. La cronologia è rimasta invariata."); } finally { busy = false; }
     }
-    async void Pin_Click(object sender, RoutedEventArgs e) { if (model.SelectedEntry is { } entry) await MutateAsync(() => history.TogglePinAsync(entry.Id)); }
-    async void Delete_Click(object sender, RoutedEventArgs e) { if (model.SelectedEntry is { } entry) await MutateAsync(() => history.DeleteAsync(entry.Id)); }
+    async void Card_PinRequested(object? sender, ClipCardEventArgs e) => await MutateAsync(() => history.TogglePinAsync(e.Entry.Id));
+    async void Card_DeleteRequested(object? sender, ClipCardEventArgs e) => await MutateAsync(() => history.DeleteAsync(e.Entry.Id));
     async void Clear_Click(object sender, RoutedEventArgs e)
     {
         if (dialogOpen || busy) return; dialogOpen = true;
@@ -151,6 +144,8 @@ public sealed partial class ShelfWindow : Window
     {
         if (dialogOpen) return;
         if (e.Key == VirtualKey.Escape) { Hide(); e.Handled = true; }
+        // Enter/Space on a card action must remain an action, not a paste.
+        else if (FocusManager.GetFocusedElement(Root.XamlRoot) is ButtonBase) return;
         else if (e.Key == VirtualKey.Enter && model.SelectedEntry is { } entry) { e.Handled = true; await PasteAsync(entry); }
         else if (e.Key is VirtualKey.Down or VirtualKey.Up || (e.Key is VirtualKey.Left or VirtualKey.Right && Search.FocusState == FocusState.Unfocused))
         {

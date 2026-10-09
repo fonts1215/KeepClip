@@ -3,7 +3,8 @@
 ## Evidenza raccolta
 
 - Primo build WinUI 3 Release x64: 0 errori, 0 avvisi.
-- Verifica automatica aggiornata: **58/58 test superati**, inclusi recupero di database corrotto, backup fallito, pulizia dopo commit, generazione della cattura, sessione incolla, layout Win32 x64, selezioni consentite/escluse, avvisi di salvataggio e compatibilità delle impostazioni precedenti.
+- Verifica automatica iniziale: **58/58 test superati**, inclusi recupero di database corrotto, backup fallito, pulizia dopo commit, generazione della cattura, sessione incolla, layout Win32 x64, selezioni consentite/escluse, avvisi di salvataggio e compatibilità delle impostazioni precedenti.
+- Aggiornamento 9 ottobre 2026 (provenienza e azioni per card): **142 test Core/Storage e 3 test STA superati**; publish Release x64 riuscito senza errori o avvisi. Le prove GUI di questa versione sono affidate all'utente.
 - Prima generazione MSIX: riuscita, non firmata.
 - Applicazione avviata; l'utente ha mostrato le impostazioni in esecuzione.
 - Test 1 dell'utente: schede assenti. Diagnosi confermata dal file di impostazioni: `IsPaused=true`. Corretto il toggle ambiguo (ora acceso = cattura attiva). Ripetizione del test dopo abilitazione ancora da confermare.
@@ -18,10 +19,10 @@ Prima di cominciare: usa la build aggiornata, imposta Cattura degli appunti su *
 | Test | Azioni | Risultato atteso | Stato |
 |---|---|---|---|
 | 1 — Testo | Copia due testi da Blocco note; Ctrl+Shift+V | Due schede, ultima copia per prima | Da ripetere dopo correzione toggle |
-| 2 — Incolla | Cursore in Blocco note; Ctrl+Shift+V; un clic sulla scheda, poi doppio clic | Un clic seleziona senza chiudere; il doppio clic chiude e inserisce il testo nel punto del cursore | Da riprovare dopo correzione focus |
+| 2 — Incolla | Cursore in Blocco note; Ctrl+Shift+V; un solo clic sull'anteprima della scheda | Il pannello chiude e inserisce il testo nel punto del cursore della finestra da cui è stato aperto | Da provare nella nuova versione |
 | 3 — Duplicati | Ricopia uno dei testi | Stessa voce in cima, nessun duplicato | Automatico; desktop non verificato |
 | 4 — Ricerca | Cerca una parola presente in una scheda | Solo le corrispondenze | Automatico; desktop non verificato |
-| 5 — Preferiti | Seleziona con frecce, ★ Preferito; filtro preferiti | Solo le voci fissate | Automatico; desktop non verificato |
+| 5 — Preferiti | Premi ☆ Preferito sulla singola card; attiva il filtro preferiti | Solo le voci fissate; il pulsante non incolla | Persistenza automatica; nuovo pulsante da provare |
 | 6 — Immagine | Copia un'immagine da Paint; scegli la scheda tornando a Paint | Anteprima e immagine incollata | Non verificato |
 | 7 — Esc/background | Chiudi con Esc; copia altro testo; riapri | Nessun incolla alla chiusura; nuova voce acquisita | Non verificato |
 | 8 — Pausa | Pausa, copia un testo, riprendi, riapri | La copia durante la pausa non viene aggiunta | Automatico; desktop non verificato |
@@ -43,7 +44,7 @@ Prima di cominciare: usa la build aggiornata, imposta Cattura degli appunti su *
 Riporta numero del test, applicazione destinataria, passaggi e risultato. Se la cattura attiva fallisce, controlla l'eventuale avviso e il log locale `diagnostic.log`, che non contiene i dati copiati.
 
 ## File e cartelle
-1. Copia un file da Esplora file con Ctrl+C. Apri una cartella di destinazione, poi Ctrl+Shift+V e doppio clic sulla card: il file deve comparire nella destinazione e restare nell'origine.
+1. Copia un file da Esplora file con Ctrl+C. Apri una cartella di destinazione, poi Ctrl+Shift+V e un clic sull'anteprima della card: il file deve comparire nella destinazione e restare nell'origine.
 2. Ripeti con più file e una cartella: una sola card, nomi e conteggio corretti, tutta la selezione incollata.
 3. Cerca il nome di un file e aggiungi la card ai preferiti. Riavvia KeepClip: card e riferimenti devono essere conservati.
 4. Su file di prova, sposta o elimina un originale: la card deve indicare originali non disponibili e l'incolla deve avvisare senza copiare solo gli altri file.
@@ -97,3 +98,14 @@ Dopo aver chiuso la versione precedente, avvia `artifacts/publish-themes-fixed-x
 5. Salva Sistema e cambia tra tema chiaro e scuro nelle impostazioni di Windows: KeepClip deve aggiornarsi senza riavvio. Salva invece una modalità esplicita: deve conservarla quando Windows cambia tema.
 6. Attiva temporaneamente un tema a contrasto elevato in Windows: pagina, testi e controlli devono usare i colori di sistema. Disattivalo: deve tornare la palette scelta.
 7. Usa «Ripristina tema predefinito», poi salva: tornano Sistema, Corallo e sfondi neutri. Verifica che Salva resti visibile quando scorri e che modalità, palette e opzione siano utilizzabili con Tab, Invio e Spazio. Ripeti a DPI 125%/150% e su Windows 10 e 11.
+
+## Provenienza nella versione portable, azioni e clic singolo
+
+1. Esci dalla precedente KeepClip tramite il menu nell'area di notifica. Estrai lo ZIP aggiornato e avvia KeepClip.exe dalla cartella completa.
+2. Con cattura attiva, copia nuovi testi da Blocco note, Teams desktop e ChatGPT desktop; copia anche un'immagine con lo Strumento di cattura e un file da Esplora file. Controlla nome e icona nelle nuove card. Le card precedenti restano invariate finché non ricopi il contenuto.
+3. Copia da Blocco note e passa subito a Teams: quando il proprietario è riconosciuto, la card deve restare attribuita a Blocco note. Riavvia KeepClip e verifica la persistenza del nome e dell'icona.
+4. Apri il pannello con il cursore in Blocco note e fai un solo clic sull'anteprima o sull'header di una card di testo: il pannello si chiude e il testo viene incollato nel punto del cursore. Ripeti in Teams e per un'immagine in Paint. Frecce e Invio devono ancora incollare la voce selezionata.
+5. Con almeno due card, seleziona A con le frecce, poi premi Preferito sulla card B: deve fissarsi solo B, il pannello deve restare aperto e non deve partire un incolla. Premi Elimina sulla card B: deve sparire solo B, senza incollare. Usa Tab e Invio sugli stessi pulsanti e verifica lo stesso comportamento.
+6. Scorri la lista senza cliccare una card, chiudi con Esc o clic fuori: nessun incolla. Apri con avviso visibile e con temi chiaro/scuro: header, anteprima, data e pulsanti devono essere interamente visibili, anche a DPI 150%.
+
+Test automatici: selezione del proprietario reale, ripiego dai processi intermediari di Windows, proprietario assente/inaccessibile, Esplora file, nessuna attribuzione a un intermediario senza un'app riconoscibile e abbinamento della sequenza alla notifica. La verifica reale di provenienza e incolla nelle app esterne è affidata all'utente; nessuna prova GUI è dichiarata superata per questa versione.

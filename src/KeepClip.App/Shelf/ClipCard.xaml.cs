@@ -1,13 +1,30 @@
 using KeepClip.Core.History;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Storage;
 using Windows.Storage.Streams;
 namespace KeepClip.App.Shelf;
 public sealed partial class ClipCard : UserControl
 {
+    public event EventHandler<ClipCardEventArgs>? PasteRequested;
+    public event EventHandler<ClipCardEventArgs>? PinRequested;
+    public event EventHandler<ClipCardEventArgs>? DeleteRequested;
     public ClipCard() { InitializeComponent(); DataContextChanged += (_, _) => Refresh(); }
+    void Card_Tapped(object sender, TappedRoutedEventArgs e)
+    {
+        // Buttons belong to this card but must never invoke the card's paste action.
+        for (var node = e.OriginalSource as DependencyObject; node is not null && node != this; node = VisualTreeHelper.GetParent(node))
+            if (node is ButtonBase) return;
+        if (DataContext is not ClipEntry entry) return;
+        e.Handled = true; PasteRequested?.Invoke(this, new(entry));
+    }
+    void Pin_Click(object sender, RoutedEventArgs e) { if (DataContext is ClipEntry entry) PinRequested?.Invoke(this, new(entry)); }
+    void Delete_Click(object sender, RoutedEventArgs e) { if (DataContext is ClipEntry entry) DeleteRequested?.Invoke(this, new(entry)); }
     async void Refresh()
     {
         PreviewImage.Source = null; PreviewText.Text = ""; SourceIcon.Source = null; SourceFallback.Visibility = Visibility.Visible;
@@ -15,6 +32,9 @@ public sealed partial class ClipCard : UserControl
         if (DataContext is not ClipEntry entry) return;
         KindLabel.Text = entry.Kind switch { ClipKind.Text => "TESTO", ClipKind.Image => "IMMAGINE", ClipKind.Files => (entry.Files?.Count ?? 0) + " FILE", _ => "" };
         PinLabel.Visibility = entry.IsPinned ? Visibility.Visible : Visibility.Collapsed;
+        PinButton.Content = entry.IsPinned ? "★ Fissato" : "☆ Preferito";
+        var pinAction = entry.IsPinned ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti";
+        ToolTipService.SetToolTip(PinButton, pinAction); AutomationProperties.SetName(PinButton, pinAction);
         TimeLabel.Text = entry.CopiedAt.ToLocalTime().ToString("dd MMM · HH:mm");
         PreviewText.Text = entry.Text is { Length: > 1200 } text ? text[..1200] : entry.Text ?? "";
         if (entry.Kind == ClipKind.Files && entry.Files is { } files) PreviewText.Text = FileReferences.Display(files);
@@ -50,4 +70,8 @@ public sealed partial class ClipCard : UserControl
             catch { if (ReferenceEquals(DataContext, entry)) PreviewText.Text = "Anteprima non disponibile"; }
         }
     }
+}
+public sealed class ClipCardEventArgs(ClipEntry entry) : EventArgs
+{
+    public ClipEntry Entry { get; } = entry;
 }
