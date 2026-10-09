@@ -75,3 +75,14 @@ Queste prove richiedono la versione `artifacts/publish-async-clipboard-x64/KeepC
 6. Chiudi l'app mentre un'acquisizione è in corso, poi riavviala: nessuna richiesta della vecchia istanza deve completare una scrittura dopo la chiusura.
 
 Gli eventuali fallback della libreria sono registrati come `clipboard-library fallback`, solo con tipo di eccezione e HRESULT. I test del dispatcher STA usano delegati gestiti e non leggono, scrivono o svuotano gli appunti del PC.
+
+## Volume del suono di copia
+
+Usa `artifacts/publish-volume-x64/KeepClip.exe`, dopo aver chiuso la versione precedente. Le prove con riproduzione audio restano affidate all'utente:
+
+1. Apri le impostazioni: sotto «Suono di conferma copia» trovi lo slider 0–100%, la percentuale e «Prova suono». Le preferenze esistenti devono partire dal 50%, mantenendo il livello precedente.
+2. Prova 25%, 50% e 100% con il pulsante: il livello deve aumentare e il timbro restare uguale. Il pulsante consente l'anteprima anche quando il suono automatico è disattivato; trascinare lo slider non deve riprodurre audio.
+3. Attiva il suono, scegli 75% e premi «Salva impostazioni». Copia un nuovo testo: deve comparire la card e suonare al livello scelto. Chiudi e riapri KeepClip: lo slider deve mostrare ancora 75%.
+4. Salva 0%: copia un altro testo, poi un'immagine o un file; le card devono apparire senza suono. «Prova suono» a 0% deve indicare che il volume è silenzioso.
+5. Disattiva il toggle e salva: le copie devono essere silenziose, mantenendo il livello dello slider. Riattiva e salva: il livello scelto deve tornare operativo.
+6. Premi più volte «Prova suono» a livelli diversi e chiudi l'app durante la riproduzione: nessun suono deve continuare dopo l'uscita. Controlla anche che slider e pulsante siano raggiungibili con Tab e che i tasti freccia regolino il livello.

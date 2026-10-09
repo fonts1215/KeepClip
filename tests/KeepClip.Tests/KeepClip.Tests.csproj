@@ -16,5 +16,6 @@
     <Using Include="Xunit"/>
     <Compile Include="../../src/KeepClip.App/Interop/NativeMethods.cs" Link="Interop/NativeMethods.cs"/>
     <Compile Include="../../src/KeepClip.App/Clipboard/AsyncClipboardContentReader.cs" Link="Clipboard/AsyncClipboardContentReader.cs"/>
+    <Compile Include="../../src/KeepClip.App/Clipboard/CopySoundWave.cs" Link="Clipboard/CopySoundWave.cs"/>
   </ItemGroup>
 </Project>

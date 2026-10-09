@@ -6,7 +6,7 @@ public interface IHistoryRepository
     Task SaveAsync(IReadOnlyList<ClipEntry> entries, CancellationToken ct = default);
 }
 public sealed record Hotkey(uint Modifiers = 6, uint Key = 0x56);
-public sealed record AppSettings(Hotkey Hotkey, bool IsPaused = false, bool AutoStart = false, bool CopyOnSelection = false, bool CopySound = false)
+public sealed record AppSettings(Hotkey Hotkey, bool IsPaused = false, bool AutoStart = false, bool CopyOnSelection = false, bool CopySound = false, int CopySoundVolume = 50)
 {
     public static AppSettings Default => new(new Hotkey());
 }

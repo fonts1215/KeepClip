@@ -110,7 +110,7 @@ public partial class App : Application
         UpdateSelectionCapture();
     }
     void Notify(string message) { shelf?.ShowMessage(message); tray?.Notify(message); }
-    void OnCopied() { if (settings.CopySound && history?.IsPaused == false) CopyFeedbackSound.Play(); }
+    void OnCopied() { if (!shuttingDown && settings.CopySound && history?.IsPaused == false) CopyFeedbackSound.Play(settings.CopySoundVolume); }
     bool UpdateSelectionCapture()
     {
         if (selectionCopy is null) return true;
@@ -120,6 +120,7 @@ public partial class App : Application
     void Shutdown()
     {
         if (shuttingDown) return; shuttingDown = true;
+        CopyFeedbackSound.Stop();
         selectionCopy?.Dispose(); foreground?.Dispose(); monitor?.Dispose(); clipboard?.Dispose(); hotkey?.Dispose(); tray?.Dispose(); messages?.Dispose(); settingsWindow?.Close(); shelf?.ExitWindow(); instance.Dispose(); Exit();
     }
 }

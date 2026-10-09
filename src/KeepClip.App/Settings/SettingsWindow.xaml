@@ -7,6 +7,14 @@
     <ToggleSwitch x:Name="CopySelection" Header="Copia alla selezione" OffContent="Disattivata" OnContent="Attiva"/>
     <TextBlock Text="Copia il testo al rilascio del mouse quando viene riconosciuto come non modificabile. Esclude campi di input, editor, password e KeepClip, così puoi selezionare testo da sostituire senza perdere gli appunti. Nei campi di input o nei controlli non riconosciuti usa Ctrl+C; si sospende quando la cattura è in pausa." TextWrapping="Wrap" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
     <ToggleSwitch x:Name="CopySound" Header="Suono di conferma copia" OffContent="Disattivato" OnContent="Attivo"/>
+    <StackPanel Spacing="8">
+      <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <TextBlock Text="Volume del suono"/>
+        <TextBlock x:Name="SoundVolumeLabel" Grid.Column="1" Text="50%"/>
+      </Grid>
+      <Slider x:Name="SoundVolume" Minimum="0" Maximum="100" Value="50" StepFrequency="1" TickFrequency="25" AutomationProperties.Name="Volume del suono di copia" ValueChanged="SoundVolume_Changed"/>
+      <Button Content="Prova suono" Click="PreviewSound_Click"/>
+    </StackPanel>
     <ToggleSwitch x:Name="AutoStart" Header="Avvia all'accesso a Windows" OffContent="Disattivato" OnContent="Attivato"/>
     <TextBlock x:Name="StartupHint" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
     <TextBlock Text="La cronologia salva testo, immagini e riferimenti a file e cartelle su questo dispositivo, fino a 200 elementi. I preferiti vengono conservati. Puoi sospendere la cattura quando copi dati sensibili." TextWrapping="Wrap"/>

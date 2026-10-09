@@ -4,7 +4,7 @@ MVP personale per la cronologia degli appunti, scritto in C# / WinUI 3. Windows 
 
 ## Avvio rapido
 
-La versione aggiornata pronta all'uso è in `artifacts/publish-async-clipboard-x64/KeepClip.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. È autonoma e non richiede di installare .NET o Windows App Runtime separatamente.
+La versione aggiornata pronta all'uso è in `artifacts/publish-volume-x64/KeepClip.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. È autonoma e non richiede di installare .NET o Windows App Runtime separatamente.
 
 Per usare la versione portabile ZIP, estrai tutti i file in una cartella stabile prima di avviare l'eseguibile. Non avviarlo direttamente dentro lo ZIP.
 
@@ -16,7 +16,7 @@ Nelle impostazioni puoi abilitare **Copia alla selezione** e **Suono di conferma
 
 La copia alla selezione acquisisce testo al rilascio del mouse dopo un trascinamento, doppio clic o Shift+clic. Funziona nelle app che espongono il testo selezionato a Windows; esclude campi di input, editor, password e KeepClip, e si sospende insieme alla cattura. Selezionare testo da sostituire in un campo non sovrascrive gli appunti; per copiarlo usa Ctrl+C. La copia automatica richiede che il controllo dichiari il testo non modificabile; se lo stato è sconosciuto o la lettura fallisce, gli appunti restano invariati e puoi usare Ctrl+C. Se l'app non è compatibile, usa Ctrl+C. Le selezioni multiple separate e quelle oltre 100.000 caratteri restano affidate alla copia manuale.
 
-Il suono dura circa 180 millisecondi e accompagna le copie salvate in cronologia, sia manuali sia automatiche. Le copie ignorate, i tentativi falliti e l'incollatura da KeepClip non producono un suono di conferma.
+Nelle impostazioni puoi regolare il volume del suono da 0 a 100% e ascoltarlo con «Prova suono» prima di salvare. Il 50% mantiene il livello precedente; il 100% ne raddoppia l'ampiezza e lo 0% è silenzioso. Il livello viene conservato al riavvio. Il suono dura circa 180 millisecondi e accompagna le copie salvate in cronologia, sia manuali sia automatiche. Le copie ignorate, i tentativi falliti e l'incollatura da KeepClip non producono un suono di conferma.
 
 - Copia testo, immagini, file o cartelle con i normali comandi dell'app che stai usando.
 - Premi **Ctrl+Shift+V**: la cronologia compare vicino al bordo inferiore del monitor.

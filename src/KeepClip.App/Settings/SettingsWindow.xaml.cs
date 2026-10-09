@@ -1,4 +1,5 @@
 using KeepClip.App.Desktop;
+using KeepClip.App.Clipboard;
 using KeepClip.Core;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -15,6 +16,8 @@ internal sealed partial class SettingsWindow : Window
         Modifiers.SelectedIndex = settings.Hotkey.Modifiers switch { 3 => 1, 5 => 2, _ => 0 };
         Letter.Text = ((char)settings.Hotkey.Key).ToString(); Pause.IsOn = !settings.IsPaused;
         CopySelection.IsOn = settings.CopyOnSelection; CopySound.IsOn = settings.CopySound;
+        SoundVolume.Value = Math.Clamp(settings.CopySoundVolume, 0, 100);
+        SoundVolumeLabel.Text = $"{(int)SoundVolume.Value}%";
         DataPathLabel.Text = "Dati locali: " + dataPath;
         AppWindow.Resize(new SizeInt32(600, 690)); ((OverlappedPresenter)AppWindow.Presenter).IsMaximizable = false;
         Root.Loaded += async (_, _) => await RefreshStartupAsync();
@@ -26,11 +29,21 @@ internal sealed partial class SettingsWindow : Window
         SaveButton.IsEnabled = false;
         try
         {
-            var settings = new AppSettings(new Hotkey(Modifiers.SelectedIndex switch { 1 => 3u, 2 => 5u, _ => 6u }, key[0]), !Pause.IsOn, AutoStart.IsOn, CopySelection.IsOn, CopySound.IsOn);
+            var settings = new AppSettings(new Hotkey(Modifiers.SelectedIndex switch { 1 => 3u, 2 => 5u, _ => 6u }, key[0]), !Pause.IsOn, AutoStart.IsOn, CopySelection.IsOn, CopySound.IsOn, (int)Math.Round(SoundVolume.Value));
             Show(await apply(settings) ?? "Impostazioni salvate."); await RefreshStartupAsync();
         }
         catch { Show("Impossibile salvare le impostazioni."); }
         finally { SaveButton.IsEnabled = true; }
+    }
+    void SoundVolume_Changed(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (SoundVolumeLabel is not null) SoundVolumeLabel.Text = $"{(int)Math.Round(e.NewValue)}%";
+    }
+    void PreviewSound_Click(object sender, RoutedEventArgs e)
+    {
+        var volume = (int)Math.Round(SoundVolume.Value);
+        if (volume == 0) { CopyFeedbackSound.Stop(); Show("Volume a 0%: il suono è silenzioso."); }
+        else if (!CopyFeedbackSound.Play(volume)) Show("Impossibile riprodurre il suono di prova.");
     }
     async void Recover_Click(object sender, RoutedEventArgs e)
     {
