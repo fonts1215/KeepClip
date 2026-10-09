@@ -86,3 +86,14 @@ Usa `artifacts/publish-volume-x64/KeepClip.exe`, dopo aver chiuso la versione pr
 4. Salva 0%: copia un altro testo, poi un'immagine o un file; le card devono apparire senza suono. «Prova suono» a 0% deve indicare che il volume è silenzioso.
 5. Disattiva il toggle e salva: le copie devono essere silenziose, mantenendo il livello dello slider. Riattiva e salva: il livello scelto deve tornare operativo.
 6. Premi più volte «Prova suono» a livelli diversi e chiudi l'app durante la riproduzione: nessun suono deve continuare dopo l'uscita. Controlla anche che slider e pulsante siano raggiungibili con Tab e che i tasti freccia regolino il livello.
+## Temi e palette
+
+Dopo aver chiuso la versione precedente, avvia `artifacts/publish-themes-x64/KeepClip.exe`. Queste prove dell'interfaccia sono affidate all'utente:
+
+1. Apri le impostazioni e scegli Chiaro e Scuro: pagina, testi, anteprima e controlli devono cambiare subito. Prova tutte le otto palette, in particolare Lime neon, Ciano e Fucsia neon. Testi, pulsanti, cursore del volume e interruttori devono restare leggibili anche al passaggio del mouse.
+2. Attiva «Colora anche sfondo e header delle card»: l'anteprima deve mostrare sfondi con una tinta leggera e un header del colore scelto. Disattivandolo, gli sfondi tornano neutri e il colore principale rimane sui controlli.
+3. Salva una combinazione Scuro / Fucsia neon / sfondi colorati. Apri la cronologia: card, header, selezione, ricerca e pulsante Incolla devono seguire la scelta. Controlla anche i dialog di svuotamento e ripristino, annullandoli. Riavvia: la scelta deve essere conservata, insieme a scorciatoia, volume, pausa e copia alla selezione.
+4. Cambia palette e modalità nelle impostazioni, poi chiudi senza salvare: riaprendo cronologia e impostazioni deve restare la scelta precedentemente salvata.
+5. Salva Sistema e cambia tra tema chiaro e scuro nelle impostazioni di Windows: KeepClip deve aggiornarsi senza riavvio. Salva invece una modalità esplicita: deve conservarla quando Windows cambia tema.
+6. Attiva temporaneamente un tema a contrasto elevato in Windows: pagina, testi e controlli devono usare i colori di sistema. Disattivalo: deve tornare la palette scelta.
+7. Usa «Ripristina tema predefinito», poi salva: tornano Sistema, Corallo e sfondi neutri. Verifica che Salva resti visibile quando scorri e che modalità, palette e opzione siano utilizzabili con Tab, Invio e Spazio. Ripeti a DPI 125%/150% e su Windows 10 e 11.

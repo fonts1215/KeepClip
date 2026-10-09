@@ -36,6 +36,7 @@ public partial class App : Application
             foreground = new();
             clipboard = new(new ClipboardAdapter(), new StaClipboardExecutor(), NativeMethods.GetClipboardSequenceNumber);
             shelf = new(history, clipboard);
+            shelf.ApplyAppearance(settings.Appearance);
             messages = new(); hotkey = new(messages); tray = new(messages) { Paused = settings.IsPaused };
             tray.Open += OpenShelf; tray.Settings += OpenSettings; tray.TogglePause += TogglePause; tray.Exit += Shutdown;
             tray.Show(); shelf.SettingsRequested += OpenSettings; shelf.Notification += Notify; hotkey.Invoked += OpenShelf;
@@ -95,6 +96,7 @@ public partial class App : Application
         try { await settingsStore.SaveAsync(next); }
         catch { hotkey.TryRegister(previous.Hotkey); if (actual.Enabled != current.Enabled) await startup.SetEnabledAsync(current.Enabled); throw; }
         settings = next; history.SetPaused(next.IsPaused || !storageReady); if (tray is not null) tray.Paused = next.IsPaused || !storageReady;
+        shelf?.ApplyAppearance(next.Appearance);
         if (!UpdateSelectionCapture()) return "Impostazioni salvate, ma la copia alla selezione non è disponibile. Riprova dopo il riavvio.";
         return !storageReady ? "Cronologia non disponibile. Ripristinala prima di riprendere la cattura." :
             (!actual.Available || actual.Enabled != requestedAutoStart) ? actual.Message ?? "Windows non ha applicato la scelta di avvio automatico." : null;

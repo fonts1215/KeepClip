@@ -4,13 +4,15 @@ MVP personale per la cronologia degli appunti, scritto in C# / WinUI 3. Windows 
 
 ## Avvio rapido
 
-La versione aggiornata pronta all'uso è in `artifacts/publish-volume-x64/KeepClip.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. È autonoma e non richiede di installare .NET o Windows App Runtime separatamente.
+La versione aggiornata pronta all'uso è in `artifacts/publish-themes-x64/KeepClip.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. È autonoma e non richiede di installare .NET o Windows App Runtime separatamente.
 
 Per usare la versione portabile ZIP, estrai tutti i file in una cartella stabile prima di avviare l'eseguibile. Non avviarlo direttamente dentro lo ZIP.
 
 Se una versione precedente è già nell'area di notifica, scegli **Esci** nel suo menu prima di aprire quella nuova. L'app permette una sola istanza per sessione Windows.
 
 ## Uso
+
+Nell'**Editor del tema** scegli Sistema, Chiaro o Scuro e una delle otto palette: Corallo, Blu elettrico, Viola, Fucsia neon, Ciano, Lime neon, Arancio acceso e Rosso pop. Attiva «Colora anche sfondo e header delle card» per un aspetto più colorato. Le modifiche sono visibili nell'anteprima delle impostazioni; «Salva impostazioni» le applica alla cronologia e le conserva al riavvio. Chiudere senza salvare lascia il tema precedente. «Ripristina tema predefinito» prepara Sistema e Corallo, da salvare. La modalità Sistema segue Windows anche durante l'uso; il contrasto elevato di Windows ha priorità sulle palette.
 
 Nelle impostazioni puoi abilitare **Copia alla selezione** e **Suono di conferma copia**, poi premere **Salva impostazioni**. Entrambe le opzioni sono inizialmente disattivate, anche aggiornando una configurazione precedente.
 

@@ -1,4 +1,6 @@
 using KeepClip.App.Interop;
+using KeepClip.App.Appearance;
+using KeepClip.Core.Appearance;
 using KeepClip.Core;
 using KeepClip.Core.History;
 using KeepClip.Core.Paste;
@@ -17,6 +19,7 @@ public sealed partial class ShelfWindow : Window
     readonly PasteCoordinator paste;
     readonly PasteSession session = new();
     readonly OutsideClickWatcher outsideClicks;
+    readonly WindowTheme theme;
     PasteRequest? continuation;
     bool busy, dialogOpen, exiting;
     NativeMethods.Rect workArea;
@@ -28,6 +31,7 @@ public sealed partial class ShelfWindow : Window
     public ShelfWindow(HistoryService history, IClipboardAdapter clipboard)
     {
         InitializeComponent(); this.history = history; Root.DataContext = model;
+        theme = new(this, Root);
         AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "KeepClip.ico"));
         outsideClicks = new(WinRT.Interop.WindowNative.GetWindowHandle(this), () => IsVisible && !dialogOpen, () =>
         {
@@ -46,6 +50,7 @@ public sealed partial class ShelfWindow : Window
         Status.RegisterPropertyChangedCallback(InfoBar.IsOpenProperty, (_, _) => ResizeShelf());
         Status.SizeChanged += (_, _) => ResizeShelf();
     }
+    public void ApplyAppearance(AppearanceSettings? appearance) => theme.Apply(appearance);
     void OnHistoryChanged() => DispatcherQueue.TryEnqueue(() => { model.Refresh(history.Entries); UpdateCount(); });
     void UpdateCount()
     {
@@ -133,7 +138,8 @@ public sealed partial class ShelfWindow : Window
         try
         {
             var include = new CheckBox { Content = "Elimina anche i preferiti" };
-            var dialog = new ContentDialog { XamlRoot = Root.XamlRoot, Title = "Svuotare la cronologia?", Content = include, PrimaryButtonText = "Svuota", CloseButtonText = "Annulla", DefaultButton = ContentDialogButton.Close };
+            var dialog = new ContentDialog { XamlRoot = Root.XamlRoot, RequestedTheme = Root.RequestedTheme, Title = "Svuotare la cronologia?", Content = include, PrimaryButtonText = "Svuota", CloseButtonText = "Annulla", DefaultButton = ContentDialogButton.Close };
+            theme.StyleDialog(dialog);
             if (await dialog.ShowAsync() == ContentDialogResult.Primary) await MutateAsync(() => history.ClearAsync(include.IsChecked == true));
         }
         finally { dialogOpen = false; }
