@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.System;
 using Windows.UI;
 using Windows.UI.ViewManagement;
 
@@ -14,15 +15,18 @@ internal sealed class WindowTheme : IDisposable
     readonly Window window;
     readonly FrameworkElement root;
     readonly UISettings ui = new();
-    readonly AccessibilitySettings accessibility = new();
+    readonly ThemeSettings themeSettings;
     AppearanceSettings settings = new();
     bool disposed;
 
     public WindowTheme(Window window, FrameworkElement root)
     {
         this.window = window; this.root = root;
+        // AccessibilitySettings.HighContrastChanged requires UWP UI infrastructure.
+        // ThemeSettings is the Windows App SDK equivalent for Win32/WinUI windows.
+        themeSettings = ThemeSettings.CreateForWindowId(window.AppWindow.Id);
         ui.ColorValuesChanged += ColorsChanged;
-        accessibility.HighContrastChanged += ContrastChanged;
+        themeSettings.Changed += ContrastChanged;
         root.Loaded += RootLoaded;
         window.Closed += (_, _) => Dispose();
     }
@@ -40,7 +44,7 @@ internal sealed class WindowTheme : IDisposable
     }
     void RootLoaded(object sender, RoutedEventArgs args) => Refresh();
     void ColorsChanged(UISettings sender, object args) => QueueRefresh();
-    void ContrastChanged(AccessibilitySettings sender, object args) => QueueRefresh();
+    void ContrastChanged(ThemeSettings sender, object args) => QueueRefresh();
     void QueueRefresh() => root.DispatcherQueue.TryEnqueue(() => { if (!disposed) Refresh(); });
     void Refresh()
     {
@@ -48,7 +52,7 @@ internal sealed class WindowTheme : IDisposable
         var systemBackground = ui.GetColorValue(UIColorType.Background);
         var colors = ThemeCatalog.Resolve(settings, systemBackground.R + systemBackground.G + systemBackground.B < 384);
         root.RequestedTheme = colors.IsDark ? ElementTheme.Dark : ElementTheme.Light;
-        if (accessibility.HighContrast)
+        if (themeSettings.HighContrast)
         {
             var page = Pack(ui.UIElementColor(UIElementType.Window));
             var text = Pack(ui.UIElementColor(UIElementType.WindowText));
@@ -80,7 +84,7 @@ internal sealed class WindowTheme : IDisposable
     public void Dispose()
     {
         if (disposed) return; disposed = true;
-        ui.ColorValuesChanged -= ColorsChanged; accessibility.HighContrastChanged -= ContrastChanged;
+        ui.ColorValuesChanged -= ColorsChanged; themeSettings.Changed -= ContrastChanged;
         root.Loaded -= RootLoaded;
     }
 }

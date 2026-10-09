@@ -21,4 +21,21 @@ internal static class DiagnosticLog
             catch { /* Diagnostics must not break clipboard capture. */ }
         });
     }
+    public static void StartupFailure(string stage, Exception error)
+    {
+        // Persist before Exit: a queued Task.Run can be lost when startup fails.
+        var folder = DirectoryPath; if (folder is null) return;
+        try
+        {
+            var cause = error.GetBaseException();
+            var trace = error.StackTrace?.Replace(Environment.NewLine, " | ") ?? "unavailable";
+            lock (gate)
+            {
+                Directory.CreateDirectory(folder);
+                File.AppendAllText(Path.Combine(folder, "diagnostic.log"),
+                    $"{DateTimeOffset.UtcNow:O} app-start-failed stage={stage} exception={error.GetType().Name} hresult=0x{error.HResult:X8} cause={cause.GetType().Name} causeHresult=0x{cause.HResult:X8} stack={trace}{Environment.NewLine}");
+            }
+        }
+        catch { /* Failure diagnostics must not prevent shutdown. */ }
+    }
 }

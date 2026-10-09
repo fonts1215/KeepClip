@@ -24,25 +24,33 @@ public partial class App : Application
     protected override async void OnLaunched(LaunchActivatedEventArgs args)
     {
         if (!instance.TryAcquire()) { Exit(); return; }
+        var startupStage = "data-path";
         try
         {
             try { dataPath = Windows.Storage.ApplicationData.Current.LocalFolder.Path; }
             catch { dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ClipShelf"); }
-            DiagnosticLog.DirectoryPath = dataPath; DiagnosticLog.Write("app-start diagnostics=selection-v2");
+            DiagnosticLog.DirectoryPath = dataPath; DiagnosticLog.Write("app-start diagnostics=themes-startup-v1");
+            startupStage = "settings";
             settingsStore = new(dataPath); string? startupError = null;
             try { settings = await settingsStore.LoadAsync(); } catch { startupError = "Impostazioni non leggibili. Sono stati usati i valori predefiniti."; }
+            startupStage = "history-services";
             var repository = new SqliteHistoryRepository(dataPath); var images = new ImageStore(dataPath);
             history = new(repository, images.SaveAsync); history.SetPaused(settings.IsPaused);
-            foreground = new();
+            startupStage = "foreground-tracker"; foreground = new();
+            startupStage = "clipboard-service";
             clipboard = new(new ClipboardAdapter(), new StaClipboardExecutor(), NativeMethods.GetClipboardSequenceNumber);
-            shelf = new(history, clipboard);
+            startupStage = "shelf-window"; shelf = new(history, clipboard);
+            startupStage = "shelf-theme";
             shelf.ApplyAppearance(settings.Appearance);
+            startupStage = "desktop-services";
             messages = new(); hotkey = new(messages); tray = new(messages) { Paused = settings.IsPaused };
             tray.Open += OpenShelf; tray.Settings += OpenSettings; tray.TogglePause += TogglePause; tray.Exit += Shutdown;
             tray.Show(); shelf.SettingsRequested += OpenSettings; shelf.Notification += Notify; hotkey.Invoked += OpenShelf;
             if (!hotkey.TryRegister(settings.Hotkey)) startupError = "Scorciatoia occupata. Apri le impostazioni dall'icona e scegli un'altra combinazione.";
+            startupStage = "history-load";
             try { await history.InitializeAsync(); storageReady = true; }
             catch (Exception ex) { startupError = ex is HistoryStorageException ? ex.Message : "Impossibile aprire la cronologia. Controlla la cartella dati nelle impostazioni."; history.SetPaused(true); }
+            startupStage = "capture-services";
             monitor = new(messages, clipboard, history); monitor.Problem += Notify; monitor.Copied += OnCopied;
             var selectionCoordinator = new SelectionCopyCoordinator(clipboard, history, () => settings.CopyOnSelection, NativeMethods.GetClipboardSequenceNumber, OnCopied, Notify);
             selectionCopy = new(Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread(), history, selectionCoordinator, () => settings.CopyOnSelection && storageReady && !history.IsPaused);
@@ -51,6 +59,7 @@ public partial class App : Application
             DiagnosticLog.Write($"app-ready paused={history.IsPaused}");
             var startupActivation = false;
             try { startupActivation = Microsoft.Windows.AppLifecycle.AppInstance.GetCurrent().GetActivatedEventArgs().Kind == Microsoft.Windows.AppLifecycle.ExtendedActivationKind.StartupTask; } catch { }
+            startupStage = "show-window";
             if (!StartupCommand.ShouldStartHidden(Environment.GetCommandLineArgs(), startupActivation)) shelf.ShowFor(0);
             if (startupError is not null) Notify(startupError);
             else if (settings.IsPaused) shelf.ShowMessage("La cattura è in pausa. Riprendila dall'icona nell'area di notifica.");
@@ -58,7 +67,7 @@ public partial class App : Application
         catch (Exception ex)
         {
             // Diagnostic log contains exception type only, never clipboard payloads.
-            System.Diagnostics.Debug.WriteLine(ex.GetType().Name);
+            DiagnosticLog.StartupFailure(startupStage, ex);
             if (shelf is not null) { shelf.ShowFor(0); shelf.ShowMessage("Avvio incompleto. Verifica le dipendenze e riavvia KeepClip."); }
             else Shutdown();
         }

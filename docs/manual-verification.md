@@ -88,7 +88,7 @@ Usa `artifacts/publish-volume-x64/KeepClip.exe`, dopo aver chiuso la versione pr
 6. Premi più volte «Prova suono» a livelli diversi e chiudi l'app durante la riproduzione: nessun suono deve continuare dopo l'uscita. Controlla anche che slider e pulsante siano raggiungibili con Tab e che i tasti freccia regolino il livello.
 ## Temi e palette
 
-Dopo aver chiuso la versione precedente, avvia `artifacts/publish-themes-x64/KeepClip.exe`. Queste prove dell'interfaccia sono affidate all'utente:
+Dopo aver chiuso la versione precedente, avvia `artifacts/publish-themes-fixed-x64/KeepClip.exe`. Queste prove dell'interfaccia sono affidate all'utente:
 
 1. Apri le impostazioni e scegli Chiaro e Scuro: pagina, testi, anteprima e controlli devono cambiare subito. Prova tutte le otto palette, in particolare Lime neon, Ciano e Fucsia neon. Testi, pulsanti, cursore del volume e interruttori devono restare leggibili anche al passaggio del mouse.
 2. Attiva «Colora anche sfondo e header delle card»: l'anteprima deve mostrare sfondi con una tinta leggera e un header del colore scelto. Disattivandolo, gli sfondi tornano neutri e il colore principale rimane sui controlli.

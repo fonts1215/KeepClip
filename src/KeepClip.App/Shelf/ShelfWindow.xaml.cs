@@ -30,8 +30,11 @@ public sealed partial class ShelfWindow : Window
     public event Action<string>? Notification;
     public ShelfWindow(HistoryService history, IClipboardAdapter clipboard)
     {
-        InitializeComponent(); this.history = history; Root.DataContext = model;
+        try { InitializeComponent(); }
+        catch (Exception ex) { DiagnosticLog.StartupFailure("shelf-xaml", ex); throw; }
+        DiagnosticLog.Write("shelf-start stage=xaml-loaded"); this.history = history; Root.DataContext = model;
         theme = new(this, Root);
+        DiagnosticLog.Write("shelf-start stage=theme-created");
         AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "KeepClip.ico"));
         outsideClicks = new(WinRT.Interop.WindowNative.GetWindowHandle(this), () => IsVisible && !dialogOpen, () =>
         {
