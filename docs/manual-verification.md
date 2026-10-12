@@ -2,6 +2,8 @@
 
 ## Evidenza raccolta
 
+- 12 ottobre 2026, PC pulito: l'utente segnala mancato avvio dello ZIP su Windows 11 senza messaggi. Analisi statica delle DLL distribuite: 1.459 importazioni controllate, nessuna dipendenza diretta non di sistema mancante localmente. Nessuna correzione dell'avvio dichiarata confermata sul PC remoto. Aggiunti launcher diagnostico e manifest SHA256; sei verifiche del manifest/launcher superate con PowerShell 5.1, e verifica del pacchetto completo superata senza avviare l'app. La revisione ha fatto correggere la creazione del rapporto in caso di helper mancante e reso esplicito l'eventuale codice di uscita non disponibile.
+
 - Primo build WinUI 3 Release x64: 0 errori, 0 avvisi.
 - Verifica automatica iniziale: **58/58 test superati**, inclusi recupero di database corrotto, backup fallito, pulizia dopo commit, generazione della cattura, sessione incolla, layout Win32 x64, selezioni consentite/escluse, avvisi di salvataggio e compatibilità delle impostazioni precedenti.
 - Aggiornamento 9 ottobre 2026 (provenienza e azioni per card): **142 test Core/Storage e 3 test STA superati**; publish Release x64 riuscito senza errori o avvisi. Le prove GUI di questa versione sono affidate all'utente.

@@ -4,9 +4,11 @@ MVP personale per la cronologia degli appunti, scritto in C# / WinUI 3. Windows 
 
 ## Avvio rapido
 
-La versione aggiornata pronta all'uso è in `artifacts/publish-native-files-x64/KeepClip.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. È autonoma e non richiede di installare .NET o Windows App Runtime separatamente.
+La versione aggiornata è in `artifacts/publish-clean-pc-diagnostics-x64/KeepClip.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. Il pacchetto include .NET e Windows App Runtime; l'avvio su un PC pulito resta da verificare con il rapporto diagnostico.
 
 Per usare la versione portabile ZIP, estrai tutti i file in una cartella stabile prima di avviare l'eseguibile. Non avviarlo direttamente dentro lo ZIP.
+
+Se la finestra non compare su un altro PC, estrai il nuovo ZIP in una cartella vuota e fai doppio clic su **Avvia-con-diagnostica.cmd**. Questo controlla tutti i file estratti tramite SHA256, poi avvia KeepClip e raccoglie codice di uscita, versione Windows, architettura, eventi di avvio del log e dettagli pertinenti del registro Applicazione di Windows. Il rapporto viene salvato in `%TEMP%/KeepClip-avvio-*.txt`; la console mostra il percorso completo. Lo script non installa runtime o certificati, non modifica impostazioni di Windows e non cambia permanentemente la policy PowerShell. Non raccoglie contenuti degli appunti o della cronologia. Se KeepClip e gia aperta, occorre uscire dalla precedente istanza prima di ripetere la prova.
 
 Se una versione precedente è già nell'area di notifica, scegli **Esci** nel suo menu prima di aprire quella nuova. L'app permette una sola istanza per sessione Windows.
 
@@ -54,9 +56,12 @@ dotnet test tests/KeepClip.Tests --no-restore
 dotnet test tests/KeepClip.Windows.Tests --no-restore
 dotnet build src/KeepClip.App/KeepClip.App.csproj -c Release -p:Platform=x64
 dotnet publish src/KeepClip.App/KeepClip.App.csproj -c Release -p:Platform=x64 -o artifacts/publish-x64
+./scripts/Build-Portable.ps1 -SkipBuild -PublishDirectory ./artifacts/publish-x64
 ```
 
 Per aggiornare una dipendenza, modifica la sua versione in `Directory.Packages.props`, esegui `dotnet restore KeepClip.slnx --force-evaluate` e includi nel commit i lock file aggiornati. Il restore in modalità bloccata verifica che le dipendenze corrispondano ai lock file.
+
+`Build-Portable.ps1` genera lo ZIP con launcher diagnostico e `KeepClip.package.json`, il manifest di integrita dei file. Per ricompilare e generare insieme lo ZIP, ometti `-SkipBuild`. Il manifest segnala anche estrazioni incomplete o file alterati, senza dipendere dalle DLL presenti sul PC di sviluppo. La verifica locale delle DLL del publish corrente non ha rilevato importazioni dirette mancanti; questo non dimostra l'avvio su ogni versione di Windows. I sei test del verificatore si eseguono con `./scripts/Test-PortablePackage.ps1 -FixturesDirectory <cartella-di-prova>` e non avviano KeepClip.
 
 Chiudi l'app prima di ricompilare lo stesso percorso che stai eseguendo, per evitare file bloccati.
 
