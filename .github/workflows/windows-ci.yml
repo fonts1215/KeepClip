@@ -39,11 +39,11 @@ jobs:
           cache: true
           cache-dependency-path: '**/packages.lock.json'
       - name: Restore application tests with locked dependencies
-        run: dotnet restore tests/KeepClip.Tests -r win-${{ matrix.architecture }} --locked-mode
+        run: dotnet restore tests/KeepClip.Tests --locked-mode
       - name: Run application and native ABI tests
         run: dotnet test tests/KeepClip.Tests -c Release --arch ${{ matrix.architecture }} --no-restore --logger trx --results-directory TestResults/application
       - name: Restore Windows tests with locked dependencies
-        run: dotnet restore tests/KeepClip.Windows.Tests -r win-${{ matrix.architecture }} --locked-mode
+        run: dotnet restore tests/KeepClip.Windows.Tests --locked-mode
       - name: Run Windows tests
         run: dotnet test tests/KeepClip.Windows.Tests -c Release --arch ${{ matrix.architecture }} --no-restore --logger trx --results-directory TestResults/windows
       - name: Verify portable package validation for every architecture
