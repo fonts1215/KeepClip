@@ -1,3 +1,5 @@
+<a id="readme-top"></a>
+
 <p align="center">
   <img src="src/KeepClip.App/Assets/AppLogo.png" width="80" alt="Logo KeepClip">
 </p>
@@ -11,17 +13,35 @@
   &nbsp; Windows · x64 · ARM64 · x86
 </p>
 <p align="center">
-  <a href="#scarica-keepclip">Scarica le build</a> ·
-  <a href="#come-si-usa">Come si usa</a> ·
-  <a href="#privacy-e-dati-locali">Privacy</a> ·
-  <a href="#sviluppo">Sviluppo</a>
+  <a href="#scarica-una-build"><strong>Scarica KeepClip »</strong></a>
 </p>
+<p align="center">
+  <a href="#demo">Guarda la demo</a> ·
+  <a href="https://github.com/gdetra/KeepClip/issues/new">Segnala un problema</a> ·
+  <a href="https://github.com/gdetra/KeepClip/issues">Proponi un miglioramento</a>
+</p>
+
+<details>
+  <summary>Indice</summary>
+  <ol>
+    <li><a href="#il-progetto">Il progetto</a></li>
+    <li><a href="#per-iniziare">Per iniziare</a></li>
+    <li><a href="#come-si-usa">Come si usa</a></li>
+    <li><a href="#privacy-e-dati-locali">Privacy e dati locali</a></li>
+    <li><a href="#compatibilità-e-limiti">Compatibilità e limiti</a></li>
+    <li><a href="#sviluppo">Sviluppo</a></li>
+  </ol>
+</details>
+
+## Il progetto
+
+KeepClip raccoglie le copie recenti in un pannello compatto per Windows. Cerca un contenuto, conserva quello che usi spesso e incollalo nella tua applicazione senza perdere il filo del lavoro.
 
 ![KeepClip con testo, immagini e file di esempio](docs/media/keepclip-overview.png)
 
 *Interfaccia reale, contenuti inventati: la cattura proviene da un'istanza dimostrativa separata dalla cronologia e dagli appunti personali.*
 
-## Cosa puoi fare
+### Funzionalità
 
 - **Ritrovare le copie recenti:** testo, immagini, file e cartelle, con data e applicazione di provenienza.
 - **Cercare al volo:** filtra il testo o i nomi dei file mentre scrivi.
@@ -30,13 +50,15 @@
 - **Personalizzare il pannello:** tema chiaro, scuro o di sistema, otto palette e superfici colorate opzionali.
 - **Scegliere cosa attivare:** avvio all'accesso, suono di conferma e copia del testo alla selezione sono configurabili.
 
-### La ricerca in azione
+### Realizzato con
 
-![Dalla cronologia completa alla ricerca del testo Ciao](docs/media/keepclip-search.gif)
+C# e .NET 10, WinUI 3 per l'interfaccia, SQLite per la persistenza locale, GitVersion per il versionamento e GitHub Actions per test e pacchetti. Le dipendenze sono dichiarate in [`Directory.Packages.props`](Directory.Packages.props).
 
-*Sequenza di catture reali: cronologia completa e risultato della ricerca “Ciao”, con soli dati fittizi. [Preparazione dei media](docs/media/README.md).*
+<p align="right"><a href="#readme-top">Torna all'inizio ↑</a></p>
 
-## Scarica KeepClip
+## Per iniziare
+
+### Scarica una build
 
 **[Apri le build Windows su GitHub Actions →](https://github.com/gdetra/KeepClip/actions/workflows/windows-ci.yml?query=branch%3Amain)**
 
@@ -50,7 +72,7 @@ Apri l'ultima esecuzione di `main` conclusa con successo, scorri fino ad **Artif
 
 Per scaricare gli artifact servono l'accesso a GitHub e i permessi sul repository. Ogni artifact contiene uno **ZIP portabile**, un **MSIX non firmato** e i checksum **`SHA256SUMS.txt`**. La conservazione richiesta è di 14 giorni, entro i limiti del repository; non vengono create automaticamente GitHub Releases.
 
-### Primo avvio
+### Avvio rapido
 
 1. Estrai completamente lo **ZIP portabile interno** in una cartella stabile.
 2. Avvia `KeepClip.exe`, mantenendo insieme tutti i file estratti. Il pacchetto include .NET e Windows App Runtime.
@@ -77,6 +99,14 @@ Se l'app non compare, esegui **`Avvia-con-diagnostica.cmd`** dalla cartella estr
 Preferito ed Elimina agiscono sulla scheda senza incollarla. **Svuota…** conserva i preferiti, salvo scelta esplicita di includerli.
 
 La **copia alla selezione** è opzionale: acquisisce il testo non modificabile esposto dalle applicazioni a Windows. Per campi di input, password e controlli non compatibili usa Ctrl+C. L'incolla verso finestre avviate come amministratore può richiedere Ctrl+V manuale.
+
+### Demo
+
+![Dalla cronologia completa alla ricerca del testo Ciao](docs/media/keepclip-search.gif)
+
+*Sequenza di catture reali: cronologia completa e risultato della ricerca “Ciao”, con soli dati fittizi. [Preparazione dei media](docs/media/README.md).*
+
+<p align="right"><a href="#readme-top">Torna all'inizio ↑</a></p>
 
 ## Privacy e dati locali
 
@@ -119,3 +149,9 @@ La CI calcola la versione una volta e la usa per tutte le architetture. Gli scri
 ### Quando parte la CI
 
 Il workflow [Windows CI](.github/workflows/windows-ci.yml) esegue test e packaging su modifiche al codice o alla configurazione. **Commit e pull request limitati a file Markdown o a `docs/` non avviano le build.** I tag di rilascio e l'avvio manuale continuano a funzionare.
+
+<p align="right"><a href="#readme-top">Torna all'inizio ↑</a></p>
+
+---
+
+Struttura del README ispirata a [Best-README-Template](https://github.com/othneildrew/Best-README-Template), adattata a KeepClip.
