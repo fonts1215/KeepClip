@@ -60,17 +60,19 @@ C# e .NET 10, WinUI 3 per l'interfaccia, SQLite per la persistenza locale, GitVe
 
 ### Scarica una build
 
-**[Apri le build Windows su GitHub Actions →](https://github.com/gdetra/KeepClip/actions/workflows/windows-ci.yml?query=branch%3Amain)**
+**[Scarica l'ultima versione dalle Release →](https://github.com/gdetra/KeepClip/releases/latest)**
 
-Apri l'ultima esecuzione di `main` conclusa con successo, scorri fino ad **Artifacts** e scegli il download per il tuo dispositivo:
+Ogni versione pubblicata allega i pacchetti per tutte le architetture. Scegli il file per il tuo dispositivo:
 
-| Architettura | Per quale PC | Artifact |
+| Architettura | Per quale PC | File |
 | --- | --- | --- |
-| [x64](https://github.com/gdetra/KeepClip/actions/workflows/windows-ci.yml?query=branch%3Amain) | La maggior parte dei PC Intel e AMD a 64 bit | `KeepClip-<versione>-windows-x64` |
-| [ARM64](https://github.com/gdetra/KeepClip/actions/workflows/windows-ci.yml?query=branch%3Amain) | Windows su ARM, ad esempio Snapdragon | `KeepClip-<versione>-windows-arm64` |
-| [x86](https://github.com/gdetra/KeepClip/actions/workflows/windows-ci.yml?query=branch%3Amain) | Sistemi Windows a 32 bit compatibili | `KeepClip-<versione>-windows-x86` |
+| x64 | La maggior parte dei PC Intel e AMD a 64 bit | `KeepClip-<versione>-windows-x64.zip` |
+| ARM64 | Windows su ARM, ad esempio Snapdragon | `KeepClip-<versione>-windows-arm64.zip` |
+| x86 | Sistemi Windows a 32 bit compatibili | `KeepClip-<versione>-windows-x86.zip` |
 
-Per scaricare gli artifact servono l'accesso a GitHub e i permessi sul repository. Ogni artifact contiene uno **ZIP portabile**, un **MSIX non firmato** e i checksum **`SHA256SUMS.txt`**. La conservazione richiesta è di 14 giorni, entro i limiti del repository; non vengono create automaticamente GitHub Releases.
+Per ogni architettura trovi lo **ZIP portabile** (consigliato), l'**MSIX non firmato** e i checksum **`SHA256SUMS.txt`** per verificare il download. Le Release non richiedono permessi particolari: sono scaricabili da chiunque.
+
+> Le **build di sviluppo** più recenti restano disponibili come artifact dell'ultima esecuzione di `main` su [GitHub Actions](https://github.com/gdetra/KeepClip/actions/workflows/windows-ci.yml?query=branch%3Amain) (accesso al repository richiesto, conservazione 14 giorni). Usale solo per provare l'ultimo codice; per installare, preferisci le Release.
 
 ### Avvio rapido
 
@@ -148,13 +150,24 @@ dotnet test tests/KeepClip.Windows.Tests --no-restore
 
 ### Versioni da Git
 
-[`GitVersion.yml`](GitVersion.yml) calcola la versione da branch, tag e cronologia. Su `main` le build di sviluppo usano il suffisso `ci`; un tag come `v0.2.0` fissa la versione stabile. Controlla il risultato con `./scripts/Get-Version.ps1`. Per generare una build stabile in CI, applica il tag al commit corrente di `main` e avvia manualmente il workflow su `main`: il solo push del tag non avvia una build.
+[`GitVersion.yml`](GitVersion.yml) calcola la versione da branch, tag e cronologia. Su `main` le build di sviluppo usano il suffisso `ci`; un tag come `v0.2.0` fissa la versione stabile. Controlla il risultato con `./scripts/Get-Version.ps1`. Per pubblicare una versione stabile, applica il tag al commit desiderato di `main` e fai il push del tag: questo avvia automaticamente il workflow di release (vedi sotto). Un tag con suffisso, ad esempio `v0.2.0-rc1`, viene pubblicato come *prerelease*.
 
 La CI calcola la versione una volta e la usa per tutte le architetture. Gli script di publish aggiornano le proprietà dell'eseguibile e salvano `KeepClip.version.json`; il packaging usa quei metadati per i nomi degli archivi e la versione numerica MSIX. I build diretti dall'IDE mantengono le versioni predefinite dello SDK.
 
 ### Quando parte la CI
 
-Il workflow [Windows CI](.github/workflows/windows-ci.yml) esegue test e packaging **solo sui push a `main`** che modificano codice o configurazione. Le modifiche limitate a file Markdown o a `docs/` sono escluse. Push su altri branch, pull request e push di tag non avviano build automatiche. L'avvio manuale è disponibile su `main`; selezionando un altro branch o un tag, tutti i job vengono saltati.
+Il workflow [Windows CI](.github/workflows/windows-ci.yml) esegue test e packaging **solo sui push a `main`** che modificano codice o configurazione. Le modifiche limitate a file Markdown o a `docs/` sono escluse. Push su altri branch e pull request non avviano build automatiche. L'avvio manuale è disponibile su `main`; selezionando un altro branch o un tag, tutti i job vengono saltati.
+
+### Pubblicare una release
+
+Il workflow [Release](.github/workflows/release.yml) si attiva al **push di un tag `v*`**: ricalcola la versione con GitVersion, ricompila ZIP portabile e MSIX non firmato per x64, ARM64 e x86, genera i checksum e crea una **GitHub Release** con tutti i pacchetti allegati. Un tag con suffisso (`v0.2.0-rc1`) produce una *prerelease*.
+
+```powershell
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+In alternativa puoi avviarlo manualmente (`workflow_dispatch`) indicando un tag già esistente. I pacchetti MSIX restano non firmati: le note di ogni release spiegano come installarli e invitano a usare lo ZIP portabile per una prova rapida.
 
 <p align="right"><a href="#readme-top">Torna all'inizio ↑</a></p>
 
