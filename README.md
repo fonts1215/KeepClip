@@ -52,10 +52,11 @@ Requisiti: .NET SDK 10.0.401 e Windows SDK, con strumenti WinUI/XAML disponibili
 
 ```powershell
 dotnet restore KeepClip.slnx --locked-mode
+dotnet tool restore
 dotnet test tests/KeepClip.Tests --no-restore
 dotnet test tests/KeepClip.Windows.Tests --no-restore
 dotnet build src/KeepClip.App/KeepClip.App.csproj -c Release -p:Platform=x64
-dotnet publish src/KeepClip.App/KeepClip.App.csproj -c Release -p:Platform=x64 -o artifacts/publish-x64
+./scripts/Publish-App.ps1 -Architecture x64 -PublishDirectory ./artifacts/publish-x64
 ./scripts/Build-Portable.ps1 -SkipBuild -PublishDirectory ./artifacts/publish-x64
 ```
 
@@ -65,11 +66,11 @@ Per aggiornare una dipendenza, modifica la sua versione in `Directory.Packages.p
 
 ### CI Windows e pacchetti per architettura
 
-Il workflow `.github/workflows/windows-ci.yml` parte a ogni push e pull request e puo essere avviato manualmente da **Actions > Windows CI > Run workflow**, quando presente sul branch predefinito. Usa runner Windows con Visual Studio 2026, lo SDK indicato in `global.json` e restore NuGet in modalita bloccata.
+Il workflow `.github/workflows/windows-ci.yml` parte a ogni push (inclusi i tag) e pull request e puo essere avviato manualmente da **Actions > Windows CI > Run workflow**, quando presente sul branch predefinito. Usa runner Windows con Visual Studio 2026, lo SDK indicato in `global.json` e restore NuGet in modalita bloccata. Il job iniziale GitVersion calcola una sola versione per tutte le architetture, usando cronologia Git e tag completi.
 
 Prima esegue entrambe le suite di test in processi x64 e x86, inclusi i controlli delle strutture native usate da `SendInput`, e i test di integrita dei pacchetti per tutte e tre le architetture. Poi compila e pubblica l'app self-contained per x64, ARM64 e x86. ARM64 viene compilato da un host x64: la pipeline non verifica l'esecuzione su hardware ARM64 ne l'interazione reale con gli appunti.
 
-Al termine, nella pagina della singola esecuzione, **Artifacts** contiene `KeepClip-windows-x64`, `KeepClip-windows-arm64` e `KeepClip-windows-x86`. Ogni artifact contiene uno ZIP portabile, un MSIX non firmato e `SHA256SUMS.txt`. I rapporti TRX sono negli artifact `test-results-*`. La conservazione richiesta e di 14 giorni, entro i limiti del repository. Non vengono create automaticamente GitHub Releases.
+Al termine, nella pagina della singola esecuzione, **Artifacts** contiene `KeepClip-<versione>-windows-x64`, `KeepClip-<versione>-windows-arm64` e `KeepClip-<versione>-windows-x86`. Ogni artifact contiene uno ZIP portabile, un MSIX non firmato e `SHA256SUMS.txt`. `KeepClip-version` conserva i dati GitVersion; i rapporti TRX sono negli artifact `test-results-*`. La conservazione richiesta e di 14 giorni, entro i limiti del repository. Non vengono create automaticamente GitHub Releases.
 
 Lo ZIP include .NET e Windows App Runtime; estrailo completamente prima dell'avvio. Il pacchetto MSIX richiede una firma attendibile prima dell'installazione. La CI non crea certificati e non richiede segreti di firma. Scegli il pacchetto corrispondente all'architettura del dispositivo; una compilazione riuscita non sostituisce le verifiche manuali su ciascun sistema.
 
@@ -81,6 +82,25 @@ Per generare localmente i pacchetti (default `x64`):
 ```
 
 `-Architecture` accetta `x64`, `arm64` e `x86`; `-OutputDirectory` sceglie la cartella degli archivi. Con `-SkipBuild -PublishDirectory <cartella>` viene controllata anche l'architettura PE di `KeepClip.exe`, per evitare pacchetti etichettati in modo errato. Usa publish separati per ZIP e MSIX: lo script MSIX aggiunge il manifest di installazione nella propria cartella.
+
+### Versioni da Git con GitVersion
+
+La configurazione `GitVersion.yml` usa GitHubFlow con `main`, versione iniziale `0.2.0` e build di sviluppo `0.2.0-ci.N`. Il tool GitVersion 6.8.2 e fissato in `.config/dotnet-tools.json`. Prima dei build locali esegui `dotnet tool restore`; il tool richiede il runtime .NET 8, gia installato nel relativo job CI insieme allo SDK dell'app. Con `./scripts/Get-Version.ps1` puoi vedere la versione corrente.
+
+Usa `Publish-App.ps1`, `Build-Portable.ps1` o `Build-Package.ps1` per build versionate. Un semplice `dotnet build` dall'IDE conserva le versioni predefinite dello SDK: l'integrazione GitVersion e applicata dal publish. Gli script impostano Version, AssemblyVersion, FileVersion e InformationalVersion e salvano `KeepClip.version.json` accanto all'eseguibile. ZIP e MSIX leggono questi dati e verificano la versione del file, anche con `-SkipBuild`: i vecchi publish senza metadati devono essere ricreati.
+
+Per fissare un rilascio, sul commit verificato di `main` crea e pubblica un tag:
+
+```powershell
+git tag -a v0.2.0 -m "KeepClip 0.2.0"
+git push origin v0.2.0
+```
+
+Il tag determina la SemVer `0.2.0`; i pacchetti saranno `KeepClip-0.2.0-windows-x64.zip` e `.msix`, con analoghi nomi ARM64/x86. Dopo il tag, i commit su main preparano la patch successiva. Per chiedere incrementi espliciti, aggiungi `+semver: minor`, `+semver: major` o `+semver: patch` al messaggio del commit. Prima di 1.0.0 GitVersion applica le proprie regole per la fase iniziale: controlla sempre la versione calcolata prima di scegliere il tag. [Configurazione ufficiale](https://gitversion.net/docs/reference/configuration).
+
+MSIX richiede quattro numeri: usiamo Major.Minor.Patch.WeightedPreReleaseNumber, ad esempio `0.2.0.55028` per una build ci e `0.2.0.60000` per il tag stabile. Questo consente alla release stabile di aggiornare i precedenti pacchetti ci della stessa versione. I componenti devono rimanere entro 65535; il packaging fallisce se superano tale limite. La numerazione e destinata alla distribuzione MSIX diretta; un'eventuale pubblicazione Microsoft Store richiedera una politica con quarta componente zero. La versione completa e il commit restano nei metadati e nelle proprieta dell'eseguibile.
+
+Le verifiche dedicate sono `./scripts/Test-Versioning.ps1` e `./scripts/Test-GitVersion.ps1`; la seconda crea repository temporanei sotto artifacts e non aggiunge tag al progetto reale.
 
 Per cambiare architettura dall'IDE, seleziona `x64`, `ARM64` o `x86` nella soluzione. `Any CPU` mantiene l'app x64. Le piattaforme e i runner sono descritti nella [documentazione delle immagini GitHub Actions](https://github.com/actions/runner-images#available-images).
 
@@ -104,7 +124,7 @@ I test del servizio usano backend simulati, senza leggere o modificare gli appun
 ./scripts/Build-Package.ps1 -SkipBuild -CertificateThumbprint '<impronta del certificato>'
 ```
 
-Output: `artifacts/KeepClip-0.1.0.0-x64.msix` (versione letta dal manifest). L'Identity Publisher del manifest è `CN=ClipShelf`: il certificato di firma deve avere lo stesso subject. Il pacchetto fornito è **non firmato**, quindi non è direttamente installabile. La firma e l'attendibilità del certificato sul dispositivo restano da configurare dall'utente. Lo script non crea certificati, non li installa e non cambia le policy di Windows. La versione portabile si può usare senza questa procedura.
+Output: `artifacts/KeepClip-<SemVer>-windows-x64.msix`; la versione numerica del manifest viene impostata dai metadati GitVersion del publish. L'Identity Publisher del manifest è `CN=ClipShelf`: il certificato di firma deve avere lo stesso subject. Il pacchetto fornito è **non firmato**, quindi non è direttamente installabile. La firma e l'attendibilità del certificato sul dispositivo restano da configurare dall'utente. Lo script non crea certificati, non li installa e non cambia le policy di Windows. La versione portabile si può usare senza questa procedura.
 
 ## Verifica e limiti residui
 

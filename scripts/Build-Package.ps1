@@ -12,15 +12,17 @@ $publishRoot = Join-Path $productRoot "artifacts/publish-$Architecture"
 if ($PublishDirectory) { $publishRoot = [System.IO.Path]::GetFullPath($PublishDirectory) }
 New-Item -ItemType Directory -Path $publishRoot -Force | Out-Null
 if (-not $SkipBuild) {
-    & dotnet publish (Join-Path $productRoot 'src/KeepClip.App/KeepClip.App.csproj') -c Release "-p:Platform=$Architecture" -o $publishRoot --verbosity minimal
-    if ($LASTEXITCODE -ne 0) { throw 'Publish non riuscito.' }
+    & (Join-Path $PSScriptRoot 'Publish-App.ps1') -Architecture $Architecture -PublishDirectory $publishRoot
 }
 if (-not (Test-Path -LiteralPath (Join-Path $publishRoot 'KeepClip.exe'))) { throw 'Eseguibile pubblicato non disponibile.' }
+. (Join-Path $PSScriptRoot 'Versioning.ps1')
+$version = Get-KeepClipPublishedVersion -Directory $publishRoot
 . (Join-Path $PSScriptRoot 'PortablePackage.ps1')
 $actual = Get-KeepClipExecutableArchitecture -Path (Join-Path $publishRoot 'KeepClip.exe')
 if ($actual -ne $Architecture) { throw "Architettura eseguibile $actual diversa da quella richiesta: $Architecture." }
 [xml]$manifest = Get-Content -LiteralPath (Join-Path $productRoot 'packaging/AppxManifest.xml') -Raw
 $manifest.Package.Identity.ProcessorArchitecture = $Architecture
+$manifest.Package.Identity.Version = $version.AssemblySemFileVer
 $manifest.Save((Join-Path $publishRoot 'AppxManifest.xml'))
 $assetRoot = Join-Path $publishRoot 'Assets'
 New-Item -ItemType Directory -Path $assetRoot -Force | Out-Null
@@ -33,7 +35,7 @@ $sdkBinRoot = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits/10/bin'
 $sdk = Get-ChildItem -LiteralPath $sdkBinRoot -Directory | Where-Object { $_.Name -match '^10\.0\.\d+\.0$' -and (Test-Path -LiteralPath (Join-Path $_.FullName 'x64/makeappx.exe')) } | Sort-Object { [version]$_.Name } -Descending | Select-Object -First 1
 if (-not $sdk) { throw 'MakeAppx non trovato. Installa Windows SDK tramite Visual Studio.' }
 New-Item -ItemType Directory -Path $artifactRoot -Force | Out-Null
-$packagePath = Join-Path $artifactRoot "KeepClip-$($manifest.Package.Identity.Version)-$Architecture.msix"
+$packagePath = Join-Path $artifactRoot "KeepClip-$($version.SemVer)-windows-$Architecture.msix"
 & (Join-Path $sdk.FullName 'x64/makeappx.exe') pack /d $publishRoot /p $packagePath /o
 if ($LASTEXITCODE -ne 0) { throw 'Creazione MSIX non riuscita.' }
 if ($CertificateThumbprint) {

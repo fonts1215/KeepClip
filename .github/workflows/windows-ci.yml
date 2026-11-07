@@ -21,8 +21,40 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
 
 jobs:
+  version:
+    name: GitVersion
+    runs-on: windows-2025-vs2026
+    timeout-minutes: 10
+    outputs:
+      semver: ${{ steps.version.outputs.semver }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+          dotnet-version: '8.0.x'
+      - name: Restore pinned GitVersion tool
+        run: dotnet tool restore
+      - name: Verify release tags and development version increments
+        run: ./scripts/Test-GitVersion.ps1
+      - name: Calculate version once for all architectures
+        id: version
+        run: |
+          $version = ./scripts/Get-Version.ps1 -OutputPath ./artifacts/version/KeepClip.version.json
+          "semver=$($version.SemVer)" >> $env:GITHUB_OUTPUT
+          "Version: $($version.SemVer), MSIX: $($version.AssemblySemFileVer), commit: $($version.Sha)" >> $env:GITHUB_STEP_SUMMARY
+      - uses: actions/upload-artifact@v6
+        with:
+          name: KeepClip-version
+          path: artifacts/version/KeepClip.version.json
+          if-no-files-found: error
+          retention-days: 14
+
   test:
     name: Tests (${{ matrix.architecture }})
+    needs: version
     runs-on: windows-2025-vs2026
     timeout-minutes: 20
     strategy:
@@ -51,6 +83,8 @@ jobs:
           foreach ($architecture in @('x64', 'arm64', 'x86')) {
             ./scripts/Test-PortablePackage.ps1 -FixturesDirectory ./artifacts/package-tests -Architecture $architecture
           }
+      - name: Verify version metadata validation
+        run: ./scripts/Test-Versioning.ps1
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v6
@@ -62,7 +96,7 @@ jobs:
 
   package:
     name: Packages (${{ matrix.architecture }})
-    needs: test
+    needs: [version, test]
     runs-on: windows-2025-vs2026
     timeout-minutes: 30
     strategy:
@@ -71,6 +105,8 @@ jobs:
         architecture: [x64, arm64, x86]
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
@@ -78,8 +114,13 @@ jobs:
           cache-dependency-path: '**/packages.lock.json'
       - name: Restore app with locked dependencies
         run: dotnet restore src/KeepClip.App/KeepClip.App.csproj -p:Platform=${{ matrix.architecture }} --locked-mode
+      - name: Download shared version metadata
+        uses: actions/download-artifact@v6
+        with:
+          name: KeepClip-version
+          path: artifacts/version
       - name: Publish self-contained app
-        run: dotnet publish src/KeepClip.App/KeepClip.App.csproj -c Release -p:Platform=${{ matrix.architecture }} --no-restore -o artifacts/publish-${{ matrix.architecture }}
+        run: ./scripts/Publish-App.ps1 -Architecture ${{ matrix.architecture }} -NoRestore -PublishDirectory ./artifacts/publish-${{ matrix.architecture }} -VersionFile ./artifacts/version/KeepClip.version.json
       - name: Prepare separate MSIX payload
         run: |
           New-Item -ItemType Directory -Path artifacts/msix-${{ matrix.architecture }} -Force | Out-Null
@@ -98,7 +139,7 @@ jobs:
       - name: Upload packages
         uses: actions/upload-artifact@v6
         with:
-          name: KeepClip-windows-${{ matrix.architecture }}
+          name: KeepClip-${{ needs.version.outputs.semver }}-windows-${{ matrix.architecture }}
           path: artifacts/packages/*
           if-no-files-found: error
           compression-level: 0
