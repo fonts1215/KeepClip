@@ -148,13 +148,13 @@ dotnet test tests/KeepClip.Windows.Tests --no-restore
 
 ### Versioni da Git
 
-[`GitVersion.yml`](GitVersion.yml) calcola la versione da branch, tag e cronologia. Su `main` le build di sviluppo usano il suffisso `ci`; un tag come `v0.2.0` fissa la versione stabile. Controlla il risultato con `./scripts/Get-Version.ps1`.
+[`GitVersion.yml`](GitVersion.yml) calcola la versione da branch, tag e cronologia. Su `main` le build di sviluppo usano il suffisso `ci`; un tag come `v0.2.0` fissa la versione stabile. Controlla il risultato con `./scripts/Get-Version.ps1`. Per generare una build stabile in CI, applica il tag al commit corrente di `main` e avvia manualmente il workflow su `main`: il solo push del tag non avvia una build.
 
 La CI calcola la versione una volta e la usa per tutte le architetture. Gli script di publish aggiornano le proprietà dell'eseguibile e salvano `KeepClip.version.json`; il packaging usa quei metadati per i nomi degli archivi e la versione numerica MSIX. I build diretti dall'IDE mantengono le versioni predefinite dello SDK.
 
 ### Quando parte la CI
 
-Il workflow [Windows CI](.github/workflows/windows-ci.yml) esegue test e packaging su modifiche al codice o alla configurazione. **Commit e pull request limitati a file Markdown o a `docs/` non avviano le build.** I tag di rilascio e l'avvio manuale continuano a funzionare.
+Il workflow [Windows CI](.github/workflows/windows-ci.yml) esegue test e packaging **solo sui push a `main`** che modificano codice o configurazione. Le modifiche limitate a file Markdown o a `docs/` sono escluse. Push su altri branch, pull request e push di tag non avviano build automatiche. L'avvio manuale è disponibile su `main`; selezionando un altro branch o un tag, tutti i job vengono saltati.
 
 <p align="right"><a href="#readme-top">Torna all'inizio ↑</a></p>
 
