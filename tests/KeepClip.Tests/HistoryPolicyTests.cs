@@ -1,4 +1,4 @@
-using KeepClip.Core.History;
+using KeepClip.Domain.History;
 namespace KeepClip.Tests;
 public class HistoryPolicyTests
 {
@@ -20,12 +20,12 @@ public class HistoryPolicyTests
     {
         var entries = Enumerable.Range(1, 200).Select(i => Entry(i, true)).ToArray();
         var result = new HistoryPolicy().Apply(entries, Entry(201));
-        Assert.NotNull(result.Rejection); Assert.Equal(entries.Select(x => x.Id), result.Entries.Select(x => x.Id)); Assert.Empty(result.RemovedIds);
+        Assert.Equal(HistoryRejection.CapacityReservedForFavorites, result.Rejection); Assert.Equal(entries.Select(x => x.Id), result.Entries.Select(x => x.Id)); Assert.Empty(result.RemovedIds);
     }
     [Fact] public void RejectsOversizedPng()
     {
         var result = new HistoryPolicy().Apply([], Entry(1, size: 20L * 1024 * 1024 + 1, kind: ClipKind.Image));
-        Assert.Empty(result.Entries); Assert.NotNull(result.Rejection);
+        Assert.Empty(result.Entries); Assert.Equal(HistoryRejection.ContentTooLarge, result.Rejection);
     }
     [Fact] public void EnforcesTotalBytes()
     {
@@ -37,6 +37,6 @@ public class HistoryPolicyTests
     [Fact] public void IncomingTooLargeDoesNotEvictExistingHistory()
     {
         var original = Entry(1); var result = new HistoryPolicy().Apply([original], Entry(2, size: 251L * 1024 * 1024));
-        Assert.NotNull(result.Rejection); Assert.Equal(original, Assert.Single(result.Entries));
+        Assert.Equal(HistoryRejection.ContentTooLarge, result.Rejection); Assert.Equal(original, Assert.Single(result.Entries));
     }
 }

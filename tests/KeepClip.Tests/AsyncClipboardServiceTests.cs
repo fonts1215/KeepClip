@@ -1,7 +1,7 @@
-using KeepClip.Core;
-using KeepClip.Core.History;
-using KeepClip.Core.Selection;
-using KeepClip.Core.Paste;
+using KeepClip.Application;
+using KeepClip.Domain.History;
+using KeepClip.Application.Selection;
+using KeepClip.Application.Paste;
 namespace KeepClip.Tests;
 
 public sealed class AsyncClipboardServiceTests

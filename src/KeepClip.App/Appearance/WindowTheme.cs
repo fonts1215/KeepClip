@@ -1,4 +1,4 @@
-using KeepClip.Core.Appearance;
+using KeepClip.Application.Appearance;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;

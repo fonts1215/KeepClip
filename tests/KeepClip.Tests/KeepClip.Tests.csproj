@@ -1,22 +1,23 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <TargetFramework>net10.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../../src/KeepClip.Core/KeepClip.Core.csproj"/>
+    <ProjectReference Include="../../src/KeepClip.Application/KeepClip.Application.csproj"/>
     <ProjectReference Include="../../src/KeepClip.Storage/KeepClip.Storage.csproj"/>
     <PackageReference Include="Microsoft.NET.Test.Sdk"/>
-    <PackageReference Include="AsyncClipboardService"/>
     <PackageReference Include="xunit"/>
     <PackageReference Include="xunit.runner.visualstudio"/>
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit"/>
+    <Compile Include="../../src/KeepClip.App/Desktop/WindowsVGesture.cs" Link="Desktop/WindowsVGesture.cs"/>
+    <Compile Include="../../src/KeepClip.App/Shelf/ShelfViewModel.cs" Link="Shelf/ShelfViewModel.cs"/>
     <Compile Include="../../src/KeepClip.App/Interop/NativeMethods.cs" Link="Interop/NativeMethods.cs"/>
-    <Compile Include="../../src/KeepClip.App/Clipboard/AsyncClipboardContentReader.cs" Link="Clipboard/AsyncClipboardContentReader.cs"/>
-    <Compile Include="../../src/KeepClip.App/Clipboard/NativeFileClipboard.cs" Link="Clipboard/NativeFileClipboard.cs"/>
+    <Compile Include="../../src/KeepClip.App/Clipboard/NativeClipboard.cs" Link="Clipboard/NativeClipboard.cs"/>
     <Compile Include="../../src/KeepClip.App/Clipboard/CopySoundWave.cs" Link="Clipboard/CopySoundWave.cs"/>
     <Compile Include="../../src/KeepClip.App/DiagnosticLog.cs" Link="DiagnosticLog.cs"/>
   </ItemGroup>

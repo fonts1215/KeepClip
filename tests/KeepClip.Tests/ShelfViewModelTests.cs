@@ -1,6 +1,6 @@
-using KeepClip.Core;
-using KeepClip.Core.History;
-using KeepClip.Core.Shelf;
+using KeepClip.Application;
+using KeepClip.Domain.History;
+using KeepClip.App.Shelf;
 namespace KeepClip.Tests;
 public class ShelfViewModelTests
 {

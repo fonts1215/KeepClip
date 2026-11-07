@@ -1,5 +1,5 @@
 using System.Text.Json;
-using KeepClip.Core;
+using KeepClip.Application;
 using KeepClip.Storage;
 namespace KeepClip.Tests;
 public class SelectionSettingsTests

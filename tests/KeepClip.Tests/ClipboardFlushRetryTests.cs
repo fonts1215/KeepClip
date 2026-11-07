@@ -1,5 +1,5 @@
 using System.Runtime.InteropServices;
-using KeepClip.Core;
+using KeepClip.Application;
 namespace KeepClip.Tests;
 public sealed class ClipboardFlushRetryTests
 {

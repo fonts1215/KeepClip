@@ -1,6 +1,6 @@
-using KeepClip.Core;
-using KeepClip.Core.History;
-using KeepClip.Core.Shelf;
+using KeepClip.Application;
+using KeepClip.Domain.History;
+using KeepClip.App.Shelf;
 using KeepClip.Storage;
 namespace KeepClip.Tests;
 public sealed class FileHistoryTests
@@ -39,7 +39,7 @@ public sealed class FileHistoryTests
             await repository.SaveAsync([new(Guid.NewGuid(),ClipKind.Files,"f",DateTimeOffset.UtcNow,false,null,null,20,Files:[new(original)])]);
             await repository.SaveAsync([]);
             Assert.True(File.Exists(original)); Assert.Equal("keep",await File.ReadAllTextAsync(original));
-            Assert.False(FileReferences.Available([new(original),new(Path.Combine(root,"missing.txt"))]));
+            Assert.False(StoredClipContentLoader.FilesAvailable([new(original),new(Path.Combine(root,"missing.txt"))]));
         }
         finally { Directory.Delete(root,true); }
     }

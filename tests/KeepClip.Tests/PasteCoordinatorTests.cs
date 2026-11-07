@@ -1,6 +1,6 @@
-using KeepClip.Core;
-using KeepClip.Core.History;
-using KeepClip.Core.Paste;
+using KeepClip.Application;
+using KeepClip.Domain.History;
+using KeepClip.Application.Paste;
 namespace KeepClip.Tests;
 public class PasteCoordinatorTests
 {
@@ -34,6 +34,24 @@ public class PasteCoordinatorTests
         var result = await new PasteCoordinator(clipboard, desktop, desktop, () => desktop.Hidden = true).PasteAsync(new(ClipKind.Text, "hello"), 42);
         Assert.Equal(PasteOutcome.InputSent, result.Outcome); Assert.Equal("hello", clipboard.Content!.Text); Assert.Equal(1, desktop.Sent);
     }
+    [Fact]
+    public async Task StoredTextFollowsTheExistingCopyHideAndPasteFlow()
+    {
+        var clipboard = new RecordingClipboard();
+        var desktop = new Desktop("");
+        var coordinator = new PasteCoordinator(clipboard, desktop, desktop, () => desktop.Hidden = true);
+        var paste = new PasteClip(coordinator, new KeepClip.Storage.StoredClipContentLoader());
+        var entry = new ClipEntry(Guid.NewGuid(), ClipKind.Text, "identity", DateTimeOffset.UnixEpoch,
+            false, "stored text", null, 11);
+
+        var result = await paste.ExecuteAsync(entry, 42, () => true);
+
+        Assert.Equal(PasteOutcome.InputSent, result?.Outcome);
+        Assert.Equal("stored text", clipboard.Content?.Text);
+        Assert.True(desktop.Hidden);
+        Assert.Equal(1, desktop.Sent);
+    }
+
     sealed class RecordingClipboard : IClipboardAdapter
     {
         public ClipContent? Content;

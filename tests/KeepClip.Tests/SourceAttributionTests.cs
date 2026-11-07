@@ -1,5 +1,5 @@
-using KeepClip.Core;
-using KeepClip.Core.History;
+using KeepClip.Application;
+using KeepClip.Domain.History;
 
 namespace KeepClip.Tests;
 

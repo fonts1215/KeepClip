@@ -1,4 +1,4 @@
-using KeepClip.Core.Selection;
+using KeepClip.Application.Selection;
 namespace KeepClip.Tests;
 public sealed class SelectionFocusScopeTests
 {

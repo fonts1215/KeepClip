@@ -1,6 +1,6 @@
 using Windows.ApplicationModel;
 using Microsoft.Win32;
-using KeepClip.Core;
+using KeepClip.Application;
 namespace KeepClip.App.Desktop;
 internal sealed record StartupResult(bool Enabled, bool Available, string? Message);
 internal sealed class StartupService

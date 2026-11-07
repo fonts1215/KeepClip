@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
-using KeepClip.Core;
-using KeepClip.Core.History;
+using KeepClip.Application;
+using KeepClip.Domain.History;
 using KeepClip.App.Interop;
 using Windows.ApplicationModel;
 using Windows.Foundation;

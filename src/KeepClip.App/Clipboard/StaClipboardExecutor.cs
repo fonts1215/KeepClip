@@ -1,4 +1,4 @@
-using KeepClip.Core;
+using KeepClip.Application;
 using System.Windows.Threading;
 namespace KeepClip.App.Clipboard;
 

@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
 using System.Text.Json;
 using KeepClip.App.Clipboard;
-using KeepClip.Core;
+using KeepClip.Application;
 using KeepClip.Storage;
 
 namespace KeepClip.Tests;

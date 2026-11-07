@@ -1,6 +1,6 @@
-using KeepClip.Core;
-using KeepClip.Core.History;
-using KeepClip.Core.Selection;
+using KeepClip.Application;
+using KeepClip.Domain.History;
+using KeepClip.Application.Selection;
 namespace KeepClip.Tests;
 public class SelectionCopyTests
 {

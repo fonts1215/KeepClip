@@ -1,10 +1,9 @@
 using KeepClip.App.Interop;
 using KeepClip.App.Appearance;
-using KeepClip.Core.Appearance;
-using KeepClip.Core;
-using KeepClip.Core.History;
-using KeepClip.Core.Paste;
-using KeepClip.Core.Shelf;
+using KeepClip.Application.Appearance;
+using KeepClip.Application;
+using KeepClip.Domain.History;
+using KeepClip.Application.Paste;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -17,7 +16,7 @@ namespace KeepClip.App.Shelf;
 public sealed partial class ShelfWindow : Window
 {
     readonly HistoryService history; readonly ShelfViewModel model = new();
-    readonly PasteCoordinator paste;
+    readonly PasteClip paste;
     readonly PasteSession session = new();
     readonly OutsideClickWatcher outsideClicks;
     readonly WindowTheme theme;
@@ -29,7 +28,7 @@ public sealed partial class ShelfWindow : Window
     public bool IsVisible { get; private set; }
     public event Action? SettingsRequested;
     public event Action<string>? Notification;
-    public ShelfWindow(HistoryService history, IClipboardAdapter clipboard)
+    public ShelfWindow(HistoryService history, IClipboardAdapter clipboard, IPasteContentLoader contentLoader)
     {
         try { InitializeComponent(); }
         catch (Exception ex) { DiagnosticLog.StartupFailure("shelf-xaml", ex); throw; }
@@ -42,7 +41,7 @@ public sealed partial class ShelfWindow : Window
             var request = session.Snapshot();
             DispatcherQueue.TryEnqueue(() => { if (session.IsCurrent(request) && IsVisible && !dialogOpen) { DiagnosticLog.Write("shelf-dismiss outside-click"); Hide(); } });
         });
-        paste = new(clipboard, new WindowTarget(), new PasteInput(), () => { Hide(); continuation = session.Snapshot(); });
+        paste = new(new PasteCoordinator(clipboard, new WindowTarget(), new PasteInput(), () => { Hide(); continuation = session.Snapshot(); }), contentLoader);
         var presenter = (OverlappedPresenter)AppWindow.Presenter;
         presenter.SetBorderAndTitleBar(true, false); presenter.IsResizable = false; presenter.IsMaximizable = false; presenter.IsMinimizable = false; presenter.IsAlwaysOnTop = true;
         AppWindow.IsShownInSwitchers = false;
@@ -58,7 +57,7 @@ public sealed partial class ShelfWindow : Window
     void OnHistoryChanged() => DispatcherQueue.TryEnqueue(() => { model.Refresh(history.Entries); UpdateCount(); });
     void UpdateCount()
     {
-        CountLabel.Text = $"{history.Entries.Count}/200 · Clic o Invio incolla · Esc chiude";
+        CountLabel.Text = $"{history.Entries.Count}/200 · Invio incolla · Esc chiude";
         EmptyState.Visibility = model.Entries.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         EmptyText.Text = history.Entries.Count == 0 ? "Copia qualcosa per iniziare" : "Nessun elemento trovato";
     }
@@ -103,18 +102,15 @@ public sealed partial class ShelfWindow : Window
         var request = session.Snapshot();
         try
         {
-            ClipContent content;
-            if (entry.Kind == ClipKind.Text) content = new(ClipKind.Text, entry.Text);
-            else if (entry.Kind == ClipKind.Files)
-            {
-                if (!FileReferences.Valid(entry.Files)) throw new IOException("Riferimenti ai file non validi.");
-                if (!await Task.Run(() => FileReferences.Available(entry.Files!))) { ShowMessage("Uno o più file originali non sono più disponibili. Ripristinali oppure rimuovi questa card."); return; }
-                content = new(ClipKind.Files, Files:entry.Files);
-            }
-            else content = new(ClipKind.Image, Png: await File.ReadAllBytesAsync(entry.ImagePath ?? throw new IOException()));
-            if (!session.IsCurrent(request)) return;
             continuation = request;
-            var result = await paste.PasteAsync(content, request.Destination, canContinue: () => continuation is { } current && session.IsCurrent(current));
+            var result = await paste.ExecuteAsync(entry, request.Destination,
+                () => continuation is { } current && session.IsCurrent(current));
+            if (result is null) return;
+            if (result.Failure == PasteFailure.OriginalFilesUnavailable)
+            {
+                ShowMessage("Uno o più file originali non sono più disponibili. Ripristinali oppure rimuovi questa card.");
+                return;
+            }
             DiagnosticLog.Write($"paste kind={entry.Kind} outcome={result.Outcome} failure={result.Failure}");
             if (result.Message is not null) Notification?.Invoke(result.Message);
         }

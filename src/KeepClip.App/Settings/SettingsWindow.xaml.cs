@@ -1,8 +1,8 @@
 using KeepClip.App.Desktop;
 using KeepClip.App.Clipboard;
 using KeepClip.App.Appearance;
-using KeepClip.Core.Appearance;
-using KeepClip.Core;
+using KeepClip.Application.Appearance;
+using KeepClip.Application;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -15,15 +15,17 @@ internal sealed partial class SettingsWindow : Window
 {
     readonly Func<AppSettings, Task<string?>> apply; readonly Func<Task> recover;
     readonly WindowTheme theme;
+    readonly string dataPath;
     string selectedPalette = "coral";
     bool appearanceReady;
     public SettingsWindow(AppSettings settings, string dataPath, Func<AppSettings, Task<string?>> apply, Func<Task> recover)
     {
-        InitializeComponent(); this.apply = apply; this.recover = recover;
+        InitializeComponent(); this.apply = apply; this.recover = recover; this.dataPath = dataPath;
         theme = new(this, Root);
         CreatePaletteChoices(); SetAppearance(ThemeCatalog.Normalize(settings.Appearance));
         appearanceReady = true; PreviewAppearance();
         AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "KeepClip.ico"));
+        WindowsVShortcut.IsOn = settings.UseWindowsV;
         Modifiers.SelectedIndex = settings.Hotkey.Modifiers switch { 3 => 1, 5 => 2, _ => 0 };
         Letter.Text = ((char)settings.Hotkey.Key).ToString(); Pause.IsOn = !settings.IsPaused;
         CopySelection.IsOn = settings.CopyOnSelection; CopySound.IsOn = settings.CopySound;
@@ -40,7 +42,7 @@ internal sealed partial class SettingsWindow : Window
         SaveButton.IsEnabled = false;
         try
         {
-            var settings = new AppSettings(new Hotkey(Modifiers.SelectedIndex switch { 1 => 3u, 2 => 5u, _ => 6u }, key[0]), !Pause.IsOn, AutoStart.IsOn, CopySelection.IsOn, CopySound.IsOn, (int)Math.Round(SoundVolume.Value), ReadAppearance());
+            var settings = new AppSettings(new Hotkey(Modifiers.SelectedIndex switch { 1 => 3u, 2 => 5u, _ => 6u }, key[0]), !Pause.IsOn, AutoStart.IsOn, CopySelection.IsOn, CopySound.IsOn, (int)Math.Round(SoundVolume.Value), ReadAppearance()) { UseWindowsV = WindowsVShortcut.IsOn };
             Show(await apply(settings) ?? "Impostazioni salvate."); await RefreshStartupAsync();
         }
         catch { Show("Impossibile salvare le impostazioni."); }
@@ -84,6 +86,40 @@ internal sealed partial class SettingsWindow : Window
         if (volume == 0) { CopyFeedbackSound.Stop(); Show("Volume a 0%: il suono è silenzioso."); }
         else if (!CopyFeedbackSound.Play(volume)) Show("Impossibile riprodurre il suono di prova.");
     }
+    async void ExportLogs_Click(object sender, RoutedEventArgs e)
+    {
+        ExportLogsButton.IsEnabled = false;
+        try
+        {
+            var report = await Task.Run(() => DiagnosticLog.ReadForExport(dataPath));
+            if (report is null)
+            {
+                Show("Non ci sono ancora log da esportare.");
+                return;
+            }
+
+            var picker = new Microsoft.Windows.Storage.Pickers.FileSavePicker(AppWindow.Id)
+            {
+                SuggestedFileName = $"KeepClip-log-{DateTime.Now:yyyy-MM-dd-HHmmss}"
+            };
+            picker.FileTypeChoices.Add("File di testo", [".txt"]);
+            var file = await picker.PickSaveFileAsync();
+            if (file is null) return;
+            if (!string.Equals(Path.GetExtension(file.Path), ".txt", StringComparison.OrdinalIgnoreCase))
+            {
+                Show("Scegli un nome con estensione .txt.");
+                return;
+            }
+            await File.WriteAllTextAsync(file.Path, report);
+            Show("Log esportato. Puoi allegare il file alla segnalazione.");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException)
+        {
+            Show("Impossibile esportare il log. Controlla la cartella e riprova.");
+        }
+        finally { ExportLogsButton.IsEnabled = true; }
+    }
+
     async void Recover_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new ContentDialog { XamlRoot = Root.XamlRoot, RequestedTheme = Root.RequestedTheme, Title = "Ripristinare la cronologia?", Content = "Verrà creata una copia di backup completa della cronologia e delle immagini prima di iniziare una cronologia vuota.", PrimaryButtonText = "Ripristina", CloseButtonText = "Annulla", DefaultButton = ContentDialogButton.Close };

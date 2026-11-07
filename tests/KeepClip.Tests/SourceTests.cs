@@ -1,4 +1,4 @@
-using KeepClip.Core.History;
+using KeepClip.Domain.History;
 using KeepClip.Storage;
 using Microsoft.Data.Sqlite;
 namespace KeepClip.Tests;

@@ -1,5 +1,5 @@
-using KeepClip.Core;
-using KeepClip.Core.History;
+using KeepClip.Application;
+using KeepClip.Domain.History;
 namespace KeepClip.Tests;
 public class ClipboardCaptureTests
 {
@@ -51,6 +51,67 @@ public class ClipboardCaptureTests
         await service.CaptureAsync(new(new(ClipKind.Text, "fresh"), 2, CaptureGeneration: service.CaptureGeneration));
         Assert.Equal("fresh", Assert.Single(service.Entries).Text);
     }
+    [Fact]
+    public async Task ImageCapturePersistsPreparedContentAndReusesTheImageOnDuplicate()
+    {
+        var repository = new MemoryRepository();
+        byte[] png = [1, 2, 3];
+        var source = new ClipSource("Screen capture");
+        var writes = new List<Guid>();
+        var service = new HistoryService(repository, (id, bytes, _) =>
+        {
+            Assert.Equal(png, bytes);
+            writes.Add(id);
+            return Task.FromResult(id + ".png");
+        }, _ => Task.FromResult<ClipSource?>(source));
+        ClipboardSnapshot Snapshot(uint sequence) => new(new(ClipKind.Image), sequence,
+            SourceContext: new(sequence, 10, 20), PrepareContent: () => new(ClipKind.Image, Png: png));
+
+        Assert.True((await service.CaptureAsync(Snapshot(1))).Captured);
+        Assert.True((await service.CaptureAsync(Snapshot(2))).Captured);
+
+        var saved = Assert.Single(repository.Stored);
+        Assert.Equal(saved.Id, Assert.Single(writes));
+        Assert.Equal(saved.Id + ".png", saved.ImagePath);
+        Assert.Equal(source, saved.Source);
+    }
+
+    [Fact]
+    public async Task PauseAndResumeDuringContentPreparationDiscardTheOldCapture()
+    {
+        var repository = new MemoryRepository();
+        var service = Service(repository);
+        var snapshot = new ClipboardSnapshot(new(ClipKind.Text), 1, CaptureGeneration: service.CaptureGeneration,
+            PrepareContent: () =>
+            {
+                service.SetPaused(true);
+                service.SetPaused(false);
+                return new(ClipKind.Text, "Before the pause");
+            });
+
+        Assert.False((await service.CaptureAsync(snapshot)).Captured);
+        Assert.Empty(service.Entries);
+        Assert.Empty(repository.Stored);
+    }
+
+    [Fact]
+    public async Task PauseAndResumeDuringSourceLookupDiscardTheOldCapture()
+    {
+        var repository = new MemoryRepository();
+        var source = new TaskCompletionSource<ClipSource?>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var service = new HistoryService(repository, (_, _, _) => throw new NotSupportedException(), _ => source.Task);
+        var pending = service.CaptureAsync(new(new(ClipKind.Text, "Before the pause"), 1,
+            CaptureGeneration: service.CaptureGeneration, SourceContext: new(1, 10, 20)));
+        Assert.False(pending.IsCompleted);
+        service.SetPaused(true);
+        service.SetPaused(false);
+        source.SetResult(new ClipSource("Editor"));
+
+        Assert.False((await pending).Captured);
+        Assert.Empty(service.Entries);
+        Assert.Empty(repository.Stored);
+    }
+
     sealed class BusyAdapter : IClipboardAdapter
     {
         public int Reads;

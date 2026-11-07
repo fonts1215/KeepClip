@@ -21,6 +21,31 @@ internal static class DiagnosticLog
             catch { /* Diagnostics must not break clipboard capture. */ }
         });
     }
+    public static string? ReadForExport(string folder)
+    {
+        lock (gate)
+        {
+            var events = new System.Text.StringBuilder();
+            foreach (var fileName in new[] { "diagnostic.log.previous", "diagnostic.log" })
+            {
+                try
+                {
+                    foreach (var line in File.ReadLines(Path.Combine(folder, fileName)))
+                    {
+                        if (string.IsNullOrWhiteSpace(line)) continue;
+                        // Older startup records may include source paths in their stack trace.
+                        var stack = line.Contains(" app-start-failed ", StringComparison.Ordinal)
+                            ? line.IndexOf(" stack=", StringComparison.Ordinal) : -1;
+                        events.AppendLine(stack >= 0 ? line[..stack] : line);
+                    }
+                }
+                catch (FileNotFoundException) { }
+                catch (DirectoryNotFoundException) { }
+            }
+            return events.Length == 0 ? null : $"KeepClip · Log diagnostico{Environment.NewLine}Esportato (UTC) {DateTimeOffset.UtcNow:O}{Environment.NewLine}{Environment.NewLine}{events}";
+        }
+    }
+
     public static void StartupFailure(string stage, Exception error)
     {
         // Persist before Exit: a queued Task.Run can be lost when startup fails.

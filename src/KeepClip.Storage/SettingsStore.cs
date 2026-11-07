@@ -1,5 +1,5 @@
 using System.Text.Json;
-using KeepClip.Core;
+using KeepClip.Application;
 namespace KeepClip.Storage;
 public sealed class SettingsStore(string directory)
 {

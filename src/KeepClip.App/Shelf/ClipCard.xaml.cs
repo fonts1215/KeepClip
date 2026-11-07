@@ -1,4 +1,5 @@
-using KeepClip.Core.History;
+using KeepClip.Storage;
+using KeepClip.Domain.History;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -11,6 +12,9 @@ using Windows.Storage.Streams;
 namespace KeepClip.App.Shelf;
 public sealed partial class ClipCard : UserControl
 {
+    const string FavoriteStar = "\uE734";
+    const string FavoriteStarFilled = "\uE735";
+
     public event EventHandler<ClipCardEventArgs>? PasteRequested;
     public event EventHandler<ClipCardEventArgs>? PinRequested;
     public event EventHandler<ClipCardEventArgs>? DeleteRequested;
@@ -25,38 +29,46 @@ public sealed partial class ClipCard : UserControl
     }
     void Pin_Click(object sender, RoutedEventArgs e) { if (DataContext is ClipEntry entry) PinRequested?.Invoke(this, new(entry)); }
     void Delete_Click(object sender, RoutedEventArgs e) { if (DataContext is ClipEntry entry) DeleteRequested?.Invoke(this, new(entry)); }
+    static string FormatFiles(IReadOnlyList<ClipFile> files) =>
+        string.Join(Environment.NewLine, files.Take(4).Select(file => (file.IsDirectory ? "📁 " : "📄 ") + Path.GetFileName(file.Path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))))
+        + (files.Count > 4 ? $"{Environment.NewLine}+ altri {files.Count - 4}" : "");
+
     async void Refresh()
     {
         PreviewImage.Source = null; PreviewText.Text = ""; SourceIcon.Source = null; SourceFallback.Visibility = Visibility.Visible;
-        KindLabel.Text = ""; TimeLabel.Text = ""; SourceName.Text = ""; PinLabel.Visibility = Visibility.Collapsed;
+        KindLabel.Text = ""; TimeLabel.Text = ""; SourceName.Text = ""; PinIcon.Glyph = FavoriteStar;
         if (DataContext is not ClipEntry entry) return;
-        KindLabel.Text = entry.Kind switch { ClipKind.Text => "TESTO", ClipKind.Image => "IMMAGINE", ClipKind.Files => (entry.Files?.Count ?? 0) + " FILE", _ => "" };
-        PinLabel.Visibility = entry.IsPinned ? Visibility.Visible : Visibility.Collapsed;
-        PinButton.Content = entry.IsPinned ? "★ Fissato" : "☆ Preferito";
+        KindLabel.Text = entry.Kind switch { ClipKind.Text => "Testo", ClipKind.Image => "Immagine", ClipKind.Files => (entry.Files?.Count ?? 0) + " file", _ => "" };
+        PinIcon.Glyph = entry.IsPinned ? FavoriteStarFilled : FavoriteStar;
         var pinAction = entry.IsPinned ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti";
         ToolTipService.SetToolTip(PinButton, pinAction); AutomationProperties.SetName(PinButton, pinAction);
-        TimeLabel.Text = entry.CopiedAt.ToLocalTime().ToString("dd MMM · HH:mm");
+        TimeLabel.Text = entry.CopiedAt.ToLocalTime().ToString("dd MMM, HH:mm");
         PreviewText.Text = entry.Text is { Length: > 1200 } text ? text[..1200] : entry.Text ?? "";
-        if (entry.Kind == ClipKind.Files && entry.Files is { } files) PreviewText.Text = FileReferences.Display(files);
+        if (entry.Kind == ClipKind.Files && entry.Files is { } files) PreviewText.Text = FormatFiles(files);
         SourceName.Text = entry.Source?.Name ?? "Origine sconosciuta";
         ToolTipService.SetToolTip(SourceName, SourceName.Text);
         if (entry.Source?.IconPng is { Length: > 0 } bytes)
         {
             try
             {
-                using var stream = new InMemoryRandomAccessStream();
-                using (var writer = new DataWriter(stream.GetOutputStreamAt(0))) { writer.WriteBytes(bytes); await writer.StoreAsync(); writer.DetachStream(); }
-                stream.Seek(0); var icon = new BitmapImage { DecodePixelWidth = 80 }; await icon.SetSourceAsync(stream);
+                var cropped = await Task.Run(() => HeaderIcon.TrimTransparentMargins(bytes));
                 if (!ReferenceEquals(DataContext, entry)) return;
-                SourceIcon.Source = icon; SourceFallback.Visibility = Visibility.Collapsed;
+                if (cropped is not null)
+                {
+                    using var stream = new InMemoryRandomAccessStream();
+                    using (var writer = new DataWriter(stream.GetOutputStreamAt(0))) { writer.WriteBytes(cropped); await writer.StoreAsync(); writer.DetachStream(); }
+                    stream.Seek(0); var icon = new BitmapImage { DecodePixelWidth = 44 }; await icon.SetSourceAsync(stream);
+                    if (!ReferenceEquals(DataContext, entry)) return;
+                    SourceIcon.Source = icon; SourceFallback.Visibility = Visibility.Collapsed;
+                }
             }
             catch { }
         }
         if (!ReferenceEquals(DataContext, entry)) return;
         if (entry.Kind == ClipKind.Files && entry.Files is { } references)
         {
-            var available = await Task.Run(() => FileReferences.Available(references));
-            if (ReferenceEquals(DataContext, entry) && !available) PreviewText.Text = "Originali non disponibili" + Environment.NewLine + FileReferences.Display(references);
+            var available = await Task.Run(() => StoredClipContentLoader.FilesAvailable(references));
+            if (ReferenceEquals(DataContext, entry) && !available) PreviewText.Text = "Originali non disponibili" + Environment.NewLine + FormatFiles(references);
         }
         if (!ReferenceEquals(DataContext, entry)) return;
         if (entry.ImagePath is not null)

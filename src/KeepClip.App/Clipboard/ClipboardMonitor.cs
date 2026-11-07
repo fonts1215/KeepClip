@@ -1,66 +1,59 @@
 using System.ComponentModel;
 using KeepClip.App.Interop;
-using KeepClip.Core;
+using KeepClip.Application;
+
 namespace KeepClip.App.Clipboard;
+
 internal sealed class ClipboardMonitor : IDisposable
 {
-    readonly MessageWindow window; readonly IClipboardAdapter adapter; readonly HistoryService history;
+    readonly MessageWindow window;
+    readonly HistoryService history;
     readonly ClipboardSourceTracker sources;
-    readonly CancellationTokenSource lifetime = new();
-    bool reading, pending;
+    readonly ClipboardCapturePump capture;
     public event Action<string>? Problem;
     public event Action? Copied;
+
     public ClipboardMonitor(MessageWindow window, IClipboardAdapter adapter, HistoryService history, ClipboardSourceTracker sources)
     {
-        this.window = window; this.adapter = adapter; this.history = history;
-        this.sources = sources;
+        this.window = window; this.history = history; this.sources = sources;
         if (!NativeMethods.AddClipboardFormatListener(window.Handle)) throw new Win32Exception();
+        capture = new(history, adapter.ReadAsync);
+        capture.Captured += OnCaptured;
+        capture.Empty += () => DiagnosticLog.Write("clipboard-unsupported-or-empty");
+        capture.Failed += OnFailed;
         DiagnosticLog.Write("listener-registered");
         window.Message += OnMessage;
     }
+
     void OnMessage(uint message, nuint wp, nint lp)
     {
         if (message != NativeMethods.WM_CLIPBOARDUPDATE) return;
-        DiagnosticLog.Write($"clipboard-notification paused={history.IsPaused}");
-        if (history.IsPaused) return;
-        // Capture origin before starting the STA queue or awaiting delayed data.
         var sequence = NativeMethods.GetClipboardSequenceNumber();
+        DiagnosticLog.Write($"clipboard-notification sequence={sequence} paused={history.IsPaused}");
+        if (history.IsPaused) return;
         var owner = SourceAppResolver.ClipboardProcess();
         var foreground = SourceAppResolver.ForegroundProcess();
         if (sequence == NativeMethods.GetClipboardSequenceNumber()) sources.Record(new(sequence, owner, foreground));
-        pending = true; if (!reading) ReadPending();
+        capture.Notify();
     }
-    async void ReadPending()
+
+    void OnCaptured(ClipboardSnapshot snapshot, CaptureResult result)
     {
-        reading = true;
-        try
-        {
-            while (pending && !lifetime.IsCancellationRequested)
-            {
-                pending = false;
-                var generation = history.CaptureGeneration;
-                if (history.IsPaused) continue;
-                try
-                {
-                    var snapshot = await adapter.ReadAsync(lifetime.Token);
-                    if (snapshot is not null)
-                    {
-                        var result = await history.CaptureAsync(snapshot with { CaptureGeneration = generation }, lifetime.Token);
-                        DiagnosticLog.Write($"capture completed={result.Captured} own={snapshot.IsOwnWrite} count={history.Entries.Count}");
-                        if (result.Captured) Copied?.Invoke();
-                        if (result.Message is not null) Problem?.Invoke(result.Message);
-                    }
-                    else DiagnosticLog.Write("clipboard-unsupported-or-empty");
-                }
-                catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { }
-                catch (Exception ex)
-                {
-                    DiagnosticLog.Write($"capture-error type={ex.GetType().Name} hresult=0x{ex.HResult:X8}");
-                    Problem?.Invoke(ex is InvalidDataException ? ex.Message : $"Impossibile acquisire gli appunti (0x{ex.HResult:X8}). Riprova a copiare l'elemento.");
-                }
-            }
-        }
-        finally { reading = false; }
+        DiagnosticLog.Write($"capture sequence={snapshot.Sequence} kind={snapshot.Content.Kind} completed={result.Captured} own={snapshot.IsOwnWrite} count={history.Entries.Count}");
+        if (result.Captured) Copied?.Invoke();
+        if (result.Message is not null) Problem?.Invoke(result.Message);
     }
-    public void Dispose() { lifetime.Cancel(); window.Message -= OnMessage; NativeMethods.RemoveClipboardFormatListener(window.Handle); }
+
+    void OnFailed(Exception ex)
+    {
+        DiagnosticLog.Write($"capture-error type={ex.GetType().Name} hresult=0x{ex.HResult:X8}");
+        Problem?.Invoke(ex is InvalidDataException ? ex.Message : $"Impossibile acquisire gli appunti (0x{ex.HResult:X8}). Riprova a copiare l'elemento.");
+    }
+
+    public void Dispose()
+    {
+        window.Message -= OnMessage;
+        NativeMethods.RemoveClipboardFormatListener(window.Handle);
+        capture.Dispose();
+    }
 }

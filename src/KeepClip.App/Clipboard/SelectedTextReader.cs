@@ -1,5 +1,5 @@
 using KeepClip.App.Interop;
-using KeepClip.Core.Selection;
+using KeepClip.Application.Selection;
 using System.Windows.Automation;
 namespace KeepClip.App.Clipboard;
 internal static class SelectedTextReader

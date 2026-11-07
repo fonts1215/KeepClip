@@ -1,4 +1,4 @@
-using KeepClip.Core;
+using KeepClip.Application;
 namespace KeepClip.Tests;
 public class StartupCommandTests
 {

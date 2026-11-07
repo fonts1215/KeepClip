@@ -93,7 +93,13 @@
           "xunit.extensibility.core": "[2.9.3]"
         }
       },
-      "keepclip.core": {
+      "keepclip.application": {
+        "type": "Project",
+        "dependencies": {
+          "KeepClip.Domain": "[1.0.0, )"
+        }
+      },
+      "keepclip.domain": {
         "type": "Project"
       }
     }

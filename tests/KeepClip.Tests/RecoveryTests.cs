@@ -1,5 +1,5 @@
-using KeepClip.Core;
-using KeepClip.Core.History;
+using KeepClip.Application;
+using KeepClip.Domain.History;
 using KeepClip.Storage;
 namespace KeepClip.Tests;
 public sealed class RecoveryTests : IDisposable

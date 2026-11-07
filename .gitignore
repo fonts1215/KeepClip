@@ -5,3 +5,5 @@ TestResults/
 *.user
 *.pfx
 artifacts/
+
+.idea/.idea.KeepClip/.idea/

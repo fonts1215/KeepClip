@@ -1,8 +1,8 @@
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using KeepClip.App.Interop;
-using KeepClip.Core;
-using KeepClip.Core.Selection;
+using KeepClip.Application;
+using KeepClip.Application.Selection;
 using Microsoft.UI.Dispatching;
 namespace KeepClip.App.Clipboard;
 internal sealed class SelectionCopyService(DispatcherQueue dispatcher, HistoryService history, SelectionCopyCoordinator copy, Func<bool> enabled) : IDisposable

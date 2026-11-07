@@ -4,6 +4,13 @@
     <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Padding="28" Spacing="18">
     <TextBlock Text="Impostazioni" FontSize="26" FontWeight="SemiBold" Foreground="{ThemeResource KeepClipTextBrush}"/>
+    <Border BorderBrush="{ThemeResource KeepClipBorderBrush}" BorderThickness="0,0,0,1" Padding="0,0,0,16">
+      <StackPanel Spacing="8">
+        <TextBlock Text="Diagnostica" FontSize="18" FontWeight="SemiBold" Foreground="{ThemeResource KeepClipTextBrush}"/>
+        <TextBlock Text="Salva gli eventi recenti, i nomi delle app e i codici di errore in un file di testo da allegare a una segnalazione. Il file esclude il contenuto degli appunti." TextWrapping="Wrap" Foreground="{ThemeResource KeepClipSecondaryTextBrush}"/>
+        <Button x:Name="ExportLogsButton" Content="Esporta log…" Click="ExportLogs_Click"/>
+      </StackPanel>
+    </Border>
     <Border Background="{ThemeResource KeepClipSurfaceBrush}" BorderBrush="{ThemeResource KeepClipBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="18">
       <StackPanel Spacing="14">
         <TextBlock Text="Editor del tema" FontSize="18" FontWeight="SemiBold" Foreground="{ThemeResource KeepClipTextBrush}"/>
@@ -24,7 +31,7 @@
                 <Border Background="{ThemeResource KeepClipHeaderBrush}" CornerRadius="7,7,0,0" Padding="12">
                   <StackPanel Orientation="Horizontal" Spacing="10"><Image Source="ms-appx:///Assets/AppLogo.png" Width="32" Height="32"/><TextBlock Text="KeepClip" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="{ThemeResource KeepClipHeaderTextBrush}"/></StackPanel>
                 </Border>
-                <StackPanel Padding="12" Spacing="6"><TextBlock Text="Le tue idee, sempre a portata di mano." TextWrapping="Wrap" Foreground="{ThemeResource KeepClipTextBrush}"/><TextBlock Text="TESTO · Adesso" FontSize="11" Foreground="{ThemeResource KeepClipAccentTextBrush}"/></StackPanel>
+                <StackPanel Padding="12" Spacing="6"><TextBlock Text="Esempio di testo copiato." TextWrapping="Wrap" Foreground="{ThemeResource KeepClipTextBrush}"/><TextBlock Text="Testo · Adesso" FontSize="11" Foreground="{ThemeResource KeepClipAccentTextBrush}"/></StackPanel>
               </StackPanel>
             </Border>
             <Button Grid.Column="1" Content="Incolla" IsTabStop="False" Style="{StaticResource AccentButtonStyle}" VerticalAlignment="Center" AutomationProperties.Name="Anteprima del colore del pulsante Incolla"/>
@@ -34,7 +41,9 @@
         <Button Content="Ripristina tema predefinito" Click="ResetTheme_Click"/>
       </StackPanel>
     </Border>
-    <TextBlock Text="Scorciatoia globale" FontWeight="SemiBold" Foreground="{ThemeResource KeepClipTextBrush}"/>
+    <ToggleSwitch x:Name="WindowsVShortcut" Header="Usa Win+V per aprire KeepClip" OffContent="Windows" OnContent="KeepClip"/>
+    <TextBlock Text="Disattiva l’opzione e salva per restituire Win+V a Windows." TextWrapping="Wrap" FontSize="12" Foreground="{ThemeResource KeepClipSecondaryTextBrush}"/>
+    <TextBlock Text="Scorciatoia alternativa" FontWeight="SemiBold" Foreground="{ThemeResource KeepClipTextBrush}"/>
     <StackPanel Orientation="Horizontal" Spacing="12"><ComboBox x:Name="Modifiers" SelectedIndex="0"><ComboBoxItem Content="Ctrl + Shift"/><ComboBoxItem Content="Ctrl + Alt"/><ComboBoxItem Content="Alt + Shift"/></ComboBox><TextBox x:Name="Letter" Text="V" MaxLength="1" Width="72" Header="Lettera A–Z"/></StackPanel>
     <ToggleSwitch x:Name="Pause" Header="Cattura degli appunti" OffContent="In pausa" OnContent="Attiva"/>
     <ToggleSwitch x:Name="CopySelection" Header="Copia alla selezione" OffContent="Disattivata" OnContent="Attiva"/>

@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
@@ -23,11 +24,17 @@
   <ItemGroup>
     <FrameworkReference Include="Microsoft.WindowsDesktop.App.WPF"/>
     <Content Update="Assets/**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"/>
-    <Content Include="../../THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"/>
-    <ProjectReference Include="../KeepClip.Core/KeepClip.Core.csproj"/>
+    <ProjectReference Include="../KeepClip.Application/KeepClip.Application.csproj"/>
     <ProjectReference Include="../KeepClip.Storage/KeepClip.Storage.csproj"/>
     <PackageReference Include="Microsoft.WindowsAppSDK"/>
-    <PackageReference Include="AsyncClipboardService"/>
     <PackageReference Include="CommunityToolkit.Mvvm"/>
   </ItemGroup>
+  <!-- Rider shows the linked runtime payload as source files during design-time builds. -->
+  <Target Name="RemoveWindowsAppSdkPayloadFromDesignTime"
+          AfterTargets="AddMicrosoftWindowsAppSDKPayloadFilesFromComponents"
+          Condition="'$(DesignTimeBuild)' == 'true'">
+    <ItemGroup>
+      <None Remove="@(MicrosoftWindowsAppSDKFiles)" />
+    </ItemGroup>
+  </Target>
 </Project>

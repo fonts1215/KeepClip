@@ -1,4 +1,4 @@
-using KeepClip.Core.History;
+using KeepClip.Domain.History;
 using KeepClip.Storage;
 namespace KeepClip.Tests;
 public sealed class StorageTests : IDisposable

@@ -1,4 +1,4 @@
-using KeepClip.Core.Paste;
+using KeepClip.Application.Paste;
 namespace KeepClip.App.Interop;
 internal sealed class ForegroundTracker : IDisposable
 {

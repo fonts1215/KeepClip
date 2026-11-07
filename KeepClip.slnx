@@ -8,7 +8,8 @@
     <Project Path="src/KeepClip.App/KeepClip.App.csproj">
       <Platform Project="x64" />
     </Project>
-    <Project Path="src/KeepClip.Core/KeepClip.Core.csproj" />
+    <Project Path="src/KeepClip.Application/KeepClip.Application.csproj" />
+    <Project Path="src/KeepClip.Domain/KeepClip.Domain.csproj" />
     <Project Path="src/KeepClip.Storage/KeepClip.Storage.csproj" />
   </Folder>
   <Folder Name="/tests/">

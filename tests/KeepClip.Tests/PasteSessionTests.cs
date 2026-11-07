@@ -1,4 +1,4 @@
-using KeepClip.Core.Paste;
+using KeepClip.Application.Paste;
 namespace KeepClip.Tests;
 public class PasteSessionTests
 {

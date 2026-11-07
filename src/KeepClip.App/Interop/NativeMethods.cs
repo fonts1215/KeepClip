@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 namespace KeepClip.App.Interop;
 internal static class NativeMethods
 {
-    internal const uint WM_HOTKEY = 0x0312, WM_CLIPBOARDUPDATE = 0x031D, WM_TRAY = 0x8001;
+    internal const uint WM_HOTKEY = 0x0312, WM_CLIPBOARDUPDATE = 0x031D, WM_TRAY = 0x8001, WM_KEEPCLIP_WINDOWS_V = 0x8002;
     internal delegate nint WindowProc(nint hwnd, uint message, nuint wParam, nint lParam);
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)] internal struct WindowClass
     {
@@ -14,7 +14,10 @@ internal static class NativeMethods
     [StructLayout(LayoutKind.Sequential)] internal struct MouseHookData { public Point Point; public uint MouseData, Flags, Time; public nuint Extra; }
     internal delegate nint MouseHookProc(int code, nuint message, nint data);
     [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)] internal static extern nint SetWindowsHookEx(int id, MouseHookProc callback, nint module, uint thread);
-    [DllImport("user32.dll")] internal static extern bool UnhookWindowsHookEx(nint hook);
+    [StructLayout(LayoutKind.Sequential)] internal struct KeyboardHookData { public uint VirtualKey, ScanCode, Flags, Time; public nuint Extra; }
+    internal delegate nint KeyboardHookProc(int code, nuint message, nint data);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)] internal static extern nint SetWindowsHookEx(int id, KeyboardHookProc callback, nint module, uint thread);
+    [DllImport("user32.dll", SetLastError = true)] internal static extern bool UnhookWindowsHookEx(nint hook);
     [DllImport("user32.dll")] internal static extern nint CallNextHookEx(nint hook, int code, nuint message, nint data);
     [DllImport("user32.dll")] internal static extern bool GetWindowRect(nint hwnd, out Rect rect);
     [StructLayout(LayoutKind.Sequential)] internal struct MonitorInfo { public uint Size; public Rect Monitor, Work; public uint Flags; }

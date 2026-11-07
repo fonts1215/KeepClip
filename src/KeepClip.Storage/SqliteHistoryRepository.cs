@@ -1,5 +1,5 @@
-using KeepClip.Core;
-using KeepClip.Core.History;
+using KeepClip.Application;
+using KeepClip.Domain.History;
 using Microsoft.Data.Sqlite;
 using System.Globalization;
 using System.Text.Json;

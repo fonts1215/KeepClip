@@ -1,6 +1,6 @@
 using System.Text.Json;
-using KeepClip.Core;
-using KeepClip.Core.Appearance;
+using KeepClip.Application;
+using KeepClip.Application.Appearance;
 using KeepClip.Storage;
 
 namespace KeepClip.Tests;
