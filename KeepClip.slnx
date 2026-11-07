@@ -1,12 +1,13 @@
 <Solution>
   <Configurations>
     <Platform Name="Any CPU" />
+    <Platform Name="ARM64" />
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
   <Folder Name="/src/">
     <Project Path="src/KeepClip.App/KeepClip.App.csproj">
-      <Platform Project="x64" />
+      <Platform Solution="*|Any CPU" Project="x64" />
     </Project>
     <Project Path="src/KeepClip.Application/KeepClip.Application.csproj" />
     <Project Path="src/KeepClip.Domain/KeepClip.Domain.csproj" />

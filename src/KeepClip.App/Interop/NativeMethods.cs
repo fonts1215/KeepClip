@@ -32,7 +32,9 @@ internal static class NativeMethods
         public uint InfoFlags; public Guid Guid; public nint BalloonIcon;
     }
     [StructLayout(LayoutKind.Sequential)] internal struct KeyboardInput { public ushort Vk, Scan; public uint Flags, Time; public nuint Extra; }
-    [StructLayout(LayoutKind.Explicit, Size = 32)] internal struct InputUnion { [FieldOffset(0)] public KeyboardInput Keyboard; }
+    // MOUSEINPUT is the largest INPUT union member: 32 bytes on x64/ARM64, 24 on x86.
+    [StructLayout(LayoutKind.Sequential)] internal struct MouseInput { public int X, Y; public uint MouseData, Flags, Time; public nuint Extra; }
+    [StructLayout(LayoutKind.Explicit)] internal struct InputUnion { [FieldOffset(0)] public KeyboardInput Keyboard; [FieldOffset(0)] public MouseInput Mouse; }
     [StructLayout(LayoutKind.Sequential)] internal struct Input { public uint Type; public InputUnion Data; }
     [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)] internal static extern ushort RegisterClass(ref WindowClass cls);
     [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)] internal static extern nint CreateWindowEx(uint ex, string cls, string name, uint style, int x, int y, int w, int h, nint parent, nint menu, nint instance, nint parameter);

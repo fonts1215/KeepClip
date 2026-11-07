@@ -1,6 +1,6 @@
 # KeepClip
 
-MVP personale per la cronologia degli appunti, scritto in C# / WinUI 3. Windows 10 dalla build 17763 e Windows 11; eseguibile x64.
+MVP personale per la cronologia degli appunti, scritto in C# / WinUI 3. Build per Windows x64, ARM64 e x86. Il progetto dichiara Windows 10 dalla build 17763 e Windows 11; la compatibilita effettiva dipende anche dai requisiti di .NET 10 e Windows App SDK. macOS e Linux non sono supportati.
 
 ## Avvio rapido
 
@@ -61,7 +61,28 @@ dotnet publish src/KeepClip.App/KeepClip.App.csproj -c Release -p:Platform=x64 -
 
 Per aggiornare una dipendenza, modifica la sua versione in `Directory.Packages.props`, esegui `dotnet restore KeepClip.slnx --force-evaluate` e includi nel commit i lock file aggiornati. Il restore in modalità bloccata verifica che le dipendenze corrispondano ai lock file.
 
-`Build-Portable.ps1` genera lo ZIP con launcher diagnostico e `KeepClip.package.json`, il manifest di integrita dei file. Per ricompilare e generare insieme lo ZIP, ometti `-SkipBuild`. Il manifest segnala anche estrazioni incomplete o file alterati, senza dipendere dalle DLL presenti sul PC di sviluppo. La verifica locale delle DLL del publish corrente non ha rilevato importazioni dirette mancanti; questo non dimostra l'avvio su ogni versione di Windows. I sei test del verificatore si eseguono con `./scripts/Test-PortablePackage.ps1 -FixturesDirectory <cartella-di-prova>` e non avviano KeepClip.
+`Build-Portable.ps1` genera lo ZIP con launcher diagnostico e `KeepClip.package.json`, il manifest di integrita dei file. Per ricompilare e generare insieme lo ZIP, ometti `-SkipBuild`. Il manifest segnala anche estrazioni incomplete o file alterati, senza dipendere dalle DLL presenti sul PC di sviluppo. La verifica locale delle DLL del publish corrente non ha rilevato importazioni dirette mancanti; questo non dimostra l'avvio su ogni versione di Windows. Gli otto test del verificatore si eseguono con `./scripts/Test-PortablePackage.ps1 -FixturesDirectory ./artifacts/package-tests -Architecture x64` (oppure `arm64`, `x86`) e non avviano KeepClip.
+
+### CI Windows e pacchetti per architettura
+
+Il workflow `.github/workflows/windows-ci.yml` parte a ogni push e pull request e puo essere avviato manualmente da **Actions > Windows CI > Run workflow**, quando presente sul branch predefinito. Usa runner Windows con Visual Studio 2026, lo SDK indicato in `global.json` e restore NuGet in modalita bloccata.
+
+Prima esegue entrambe le suite di test in processi x64 e x86, inclusi i controlli delle strutture native usate da `SendInput`, e i test di integrita dei pacchetti per tutte e tre le architetture. Poi compila e pubblica l'app self-contained per x64, ARM64 e x86. ARM64 viene compilato da un host x64: la pipeline non verifica l'esecuzione su hardware ARM64 ne l'interazione reale con gli appunti.
+
+Al termine, nella pagina della singola esecuzione, **Artifacts** contiene `KeepClip-windows-x64`, `KeepClip-windows-arm64` e `KeepClip-windows-x86`. Ogni artifact contiene uno ZIP portabile, un MSIX non firmato e `SHA256SUMS.txt`. I rapporti TRX sono negli artifact `test-results-*`. La conservazione richiesta e di 14 giorni, entro i limiti del repository. Non vengono create automaticamente GitHub Releases.
+
+Lo ZIP include .NET e Windows App Runtime; estrailo completamente prima dell'avvio. Il pacchetto MSIX richiede una firma attendibile prima dell'installazione. La CI non crea certificati e non richiede segreti di firma. Scegli il pacchetto corrispondente all'architettura del dispositivo; una compilazione riuscita non sostituisce le verifiche manuali su ciascun sistema.
+
+Per generare localmente i pacchetti (default `x64`):
+
+```powershell
+./scripts/Build-Portable.ps1 -Architecture arm64
+./scripts/Build-Package.ps1 -Architecture arm64
+```
+
+`-Architecture` accetta `x64`, `arm64` e `x86`; `-OutputDirectory` sceglie la cartella degli archivi. Con `-SkipBuild -PublishDirectory <cartella>` viene controllata anche l'architettura PE di `KeepClip.exe`, per evitare pacchetti etichettati in modo errato. Usa publish separati per ZIP e MSIX: lo script MSIX aggiunge il manifest di installazione nella propria cartella.
+
+Per cambiare architettura dall'IDE, seleziona `x64`, `ARM64` o `x86` nella soluzione. `Any CPU` mantiene l'app x64. Le piattaforme e i runner sono descritti nella [documentazione delle immagini GitHub Actions](https://github.com/actions/runner-images#available-images).
 
 Chiudi l'app prima di ricompilare lo stesso percorso che stai eseguendo, per evitare file bloccati.
 
@@ -83,7 +104,7 @@ I test del servizio usano backend simulati, senza leggere o modificare gli appun
 ./scripts/Build-Package.ps1 -SkipBuild -CertificateThumbprint '<impronta del certificato>'
 ```
 
-Output: `artifacts/KeepClip-0.1.0-x64.msix`. L'Identity Publisher del manifest è `CN=ClipShelf`: il certificato di firma deve avere lo stesso subject. Il pacchetto fornito è **non firmato**, quindi non è direttamente installabile. La firma e l'attendibilità del certificato sul dispositivo restano da configurare dall'utente. Lo script non crea certificati, non li installa e non cambia le policy di Windows. La versione portabile si può usare senza questa procedura.
+Output: `artifacts/KeepClip-0.1.0.0-x64.msix` (versione letta dal manifest). L'Identity Publisher del manifest è `CN=ClipShelf`: il certificato di firma deve avere lo stesso subject. Il pacchetto fornito è **non firmato**, quindi non è direttamente installabile. La firma e l'attendibilità del certificato sul dispositivo restano da configurare dall'utente. Lo script non crea certificati, non li installa e non cambia le policy di Windows. La versione portabile si può usare senza questa procedura.
 
 ## Verifica e limiti residui
 

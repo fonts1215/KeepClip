@@ -1,0 +1,105 @@
+name: Windows CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: pwsh
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  test:
+    name: Tests (${{ matrix.architecture }})
+    runs-on: windows-2025-vs2026
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        architecture: [x64, x86]
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install .NET SDK and matching test runtime
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+          architecture: ${{ matrix.architecture }}
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
+      - name: Restore application tests with locked dependencies
+        run: dotnet restore tests/KeepClip.Tests -r win-${{ matrix.architecture }} --locked-mode
+      - name: Run application and native ABI tests
+        run: dotnet test tests/KeepClip.Tests -c Release --arch ${{ matrix.architecture }} --no-restore --logger trx --results-directory TestResults/application
+      - name: Restore Windows tests with locked dependencies
+        run: dotnet restore tests/KeepClip.Windows.Tests -r win-${{ matrix.architecture }} --locked-mode
+      - name: Run Windows tests
+        run: dotnet test tests/KeepClip.Windows.Tests -c Release --arch ${{ matrix.architecture }} --no-restore --logger trx --results-directory TestResults/windows
+      - name: Verify portable package validation for every architecture
+        run: |
+          foreach ($architecture in @('x64', 'arm64', 'x86')) {
+            ./scripts/Test-PortablePackage.ps1 -FixturesDirectory ./artifacts/package-tests -Architecture $architecture
+          }
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: test-results-${{ matrix.architecture }}
+          path: TestResults/**/*.trx
+          if-no-files-found: warn
+          retention-days: 14
+
+  package:
+    name: Packages (${{ matrix.architecture }})
+    needs: test
+    runs-on: windows-2025-vs2026
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        architecture: [x64, arm64, x86]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
+      - name: Restore app with locked dependencies
+        run: dotnet restore src/KeepClip.App/KeepClip.App.csproj -p:Platform=${{ matrix.architecture }} --locked-mode
+      - name: Publish self-contained app
+        run: dotnet publish src/KeepClip.App/KeepClip.App.csproj -c Release -p:Platform=${{ matrix.architecture }} --no-restore -o artifacts/publish-${{ matrix.architecture }}
+      - name: Prepare separate MSIX payload
+        run: |
+          New-Item -ItemType Directory -Path artifacts/msix-${{ matrix.architecture }} -Force | Out-Null
+          Copy-Item -Path artifacts/publish-${{ matrix.architecture }}/* -Destination artifacts/msix-${{ matrix.architecture }} -Recurse
+      - name: Build and verify portable ZIP
+        run: ./scripts/Build-Portable.ps1 -SkipBuild -Architecture ${{ matrix.architecture }} -PublishDirectory ./artifacts/publish-${{ matrix.architecture }} -OutputDirectory ./artifacts/packages
+      - name: Build unsigned MSIX
+        run: ./scripts/Build-Package.ps1 -SkipBuild -Architecture ${{ matrix.architecture }} -PublishDirectory ./artifacts/msix-${{ matrix.architecture }} -OutputDirectory ./artifacts/packages
+      - name: Generate package checksums
+        run: |
+          $packages = @(Get-ChildItem ./artifacts/packages -File | Where-Object Extension -In @('.zip', '.msix'))
+          if ($packages.Count -ne 2) { throw 'Expected one ZIP and one MSIX.' }
+          $packages | Sort-Object Name | ForEach-Object {
+            '{0}  {1}' -f (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant(), $_.Name
+          } | Set-Content ./artifacts/packages/SHA256SUMS.txt -Encoding utf8
+      - name: Upload packages
+        uses: actions/upload-artifact@v6
+        with:
+          name: KeepClip-windows-${{ matrix.architecture }}
+          path: artifacts/packages/*
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
