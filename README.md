@@ -1,162 +1,163 @@
-# KeepClip
+<a id="readme-top"></a>
 
-MVP personale per la cronologia degli appunti, scritto in C# / WinUI 3. Build per Windows x64, ARM64 e x86. Il progetto dichiara Windows 10 dalla build 17763 e Windows 11; la compatibilita effettiva dipende anche dai requisiti di .NET 10 e Windows App SDK. macOS e Linux non sono supportati.
+<p align="center">
+  <img src="src/KeepClip.App/Assets/AppLogo.png" width="80" alt="Logo KeepClip">
+</p>
 
-## Avvio rapido
+<h1 align="center">KeepClip</h1>
 
-La versione aggiornata è in `artifacts/publish-clean-pc-diagnostics-x64/KeepClip.exe`. Conserva l'intera cartella: l'eseguibile dipende dalle DLL incluse. Il pacchetto include .NET e Windows App Runtime; l'avvio su un PC pulito resta da verificare con il rapporto diagnostico.
+<p align="center"><strong>Copia una volta. Ritrova quando ti serve.</strong></p>
+<p align="center">Testo, immagini e file in una cronologia degli appunti sempre a portata di tastiera.</p>
+<p align="center">
+  <a href="https://github.com/gdetra/KeepClip/actions/workflows/windows-ci.yml"><img src="https://github.com/gdetra/KeepClip/actions/workflows/windows-ci.yml/badge.svg?branch=main" alt="Build Windows"></a>
+  &nbsp; Windows · x64 · ARM64 · x86
+</p>
+<p align="center">
+  <a href="#scarica-una-build"><strong>Scarica KeepClip »</strong></a>
+</p>
+<p align="center">
+  <a href="#demo">Guarda la demo</a> ·
+  <a href="https://github.com/gdetra/KeepClip/issues/new">Segnala un problema</a> ·
+  <a href="https://github.com/gdetra/KeepClip/issues">Proponi un miglioramento</a>
+</p>
 
-Per usare la versione portabile ZIP, estrai tutti i file in una cartella stabile prima di avviare l'eseguibile. Non avviarlo direttamente dentro lo ZIP.
+<details>
+  <summary>Indice</summary>
+  <ol>
+    <li><a href="#il-progetto">Il progetto</a></li>
+    <li><a href="#per-iniziare">Per iniziare</a></li>
+    <li><a href="#come-si-usa">Come si usa</a></li>
+    <li><a href="#privacy-e-dati-locali">Privacy e dati locali</a></li>
+    <li><a href="#compatibilità-e-limiti">Compatibilità e limiti</a></li>
+    <li><a href="#sviluppo">Sviluppo</a></li>
+  </ol>
+</details>
 
-Se la finestra non compare su un altro PC, estrai il nuovo ZIP in una cartella vuota e fai doppio clic su **Avvia-con-diagnostica.cmd**. Questo controlla tutti i file estratti tramite SHA256, poi avvia KeepClip e raccoglie codice di uscita, versione Windows, architettura, eventi di avvio del log e dettagli pertinenti del registro Applicazione di Windows. Il rapporto viene salvato in `%TEMP%/KeepClip-avvio-*.txt`; la console mostra il percorso completo. Lo script non installa runtime o certificati, non modifica impostazioni di Windows e non cambia permanentemente la policy PowerShell. Non raccoglie contenuti degli appunti o della cronologia. Se KeepClip e gia aperta, occorre uscire dalla precedente istanza prima di ripetere la prova.
+## Il progetto
 
-Se una versione precedente è già nell'area di notifica, scegli **Esci** nel suo menu prima di aprire quella nuova. L'app permette una sola istanza per sessione Windows.
+KeepClip raccoglie le copie recenti in un pannello compatto per Windows. Cerca un contenuto, conserva quello che usi spesso e incollalo nella tua applicazione senza perdere il filo del lavoro.
 
-## Uso
+![KeepClip con testo, immagini e file di esempio](docs/media/keepclip-overview.png)
 
-Nell'**Editor del tema** scegli Sistema, Chiaro o Scuro e una delle otto palette: Corallo, Blu elettrico, Viola, Fucsia neon, Ciano, Lime neon, Arancio acceso e Rosso pop. Attiva «Colora anche sfondo e header delle card» per un aspetto più colorato. Le modifiche sono visibili nell'anteprima delle impostazioni; «Salva impostazioni» le applica alla cronologia e le conserva al riavvio. Chiudere senza salvare lascia il tema precedente. «Ripristina tema predefinito» prepara Sistema e Corallo, da salvare. La modalità Sistema segue Windows anche durante l'uso; il contrasto elevato di Windows ha priorità sulle palette.
+*Interfaccia reale, contenuti inventati: la cattura proviene da un'istanza dimostrativa separata dalla cronologia e dagli appunti personali.*
 
-Nelle impostazioni puoi abilitare **Copia alla selezione** e **Suono di conferma copia**, poi premere **Salva impostazioni**. Entrambe le opzioni sono inizialmente disattivate, anche aggiornando una configurazione precedente.
+### Funzionalità
 
-La copia alla selezione acquisisce testo al rilascio del mouse dopo un trascinamento, doppio clic o Shift+clic. Funziona nelle app che espongono il testo selezionato a Windows; esclude campi di input, editor, password e KeepClip, e si sospende insieme alla cattura. Selezionare testo da sostituire in un campo non sovrascrive gli appunti; per copiarlo usa Ctrl+C. La copia automatica richiede che il controllo dichiari il testo non modificabile; se lo stato è sconosciuto o la lettura fallisce, gli appunti restano invariati e puoi usare Ctrl+C. Se l'app non è compatibile, usa Ctrl+C. Le selezioni multiple separate e quelle oltre 100.000 caratteri restano affidate alla copia manuale.
+- **Ritrovare le copie recenti:** testo, immagini, file e cartelle, con data e applicazione di provenienza.
+- **Cercare al volo:** filtra il testo o i nomi dei file mentre scrivi.
+- **Conservare i preferiti:** fissa le copie utili e ritrovale con il filtro dedicato.
+- **Incollare dalla cronologia:** scegli una scheda con un clic oppure con frecce e Invio.
+- **Personalizzare il pannello:** tema chiaro, scuro o di sistema, otto palette e superfici colorate opzionali.
+- **Scegliere cosa attivare:** avvio all'accesso, suono di conferma e copia del testo alla selezione sono configurabili.
 
-Nelle impostazioni puoi regolare il volume del suono da 0 a 100% e ascoltarlo con «Prova suono» prima di salvare. Il 50% mantiene il livello precedente; il 100% ne raddoppia l'ampiezza e lo 0% è silenzioso. Il livello viene conservato al riavvio. Il suono dura circa 180 millisecondi e accompagna le copie salvate in cronologia, sia manuali sia automatiche. Le copie ignorate, i tentativi falliti e l'incollatura da KeepClip non producono un suono di conferma.
+### Realizzato con
 
-- Copia testo, immagini, file o cartelle con i normali comandi dell'app che stai usando.
-- Premi **Ctrl+Shift+V**: la cronologia compare vicino al bordo inferiore del monitor.
-- Fai **un clic sull'anteprima o sull'header** di una scheda: KeepClip torna alla finestra da cui hai aperto il pannello e invia Ctrl+V. In alternativa, seleziona con le frecce e premi **Invio**.
-- **Esc** chiude il pannello senza incollare. La cattura continua in background.
-- Ogni card ha i propri pulsanti **☆ Preferito / ★ Fissato** ed **Elimina**: agiscono su quella copia senza incollare o chiudere il pannello. Anche Invio sul pulsante esegue solo la sua azione.
-- Cerca nel testo o nei nomi dei file; il filtro **★ Preferiti** mostra solo gli elementi fissati. Non è previsto OCR delle immagini.
-- **Svuota…** conserva i preferiti salvo scelta esplicita di includerli.
+C# e .NET 10, WinUI 3 per l'interfaccia, SQLite per la persistenza locale, GitVersion per il versionamento e GitHub Actions per test e pacchetti. Le dipendenze sono dichiarate in [`Directory.Packages.props`](Directory.Packages.props).
 
-## Impostazioni
+<p align="right"><a href="#readme-top">Torna all'inizio ↑</a></p>
 
-Il toggle **Cattura degli appunti** acceso significa **Attiva**, spento significa **In pausa**. Le modifiche si applicano con **Salva impostazioni**. La pausa del menu nell'area di notifica invece si applica immediatamente.
+## Per iniziare
 
-Scorciatoia: Ctrl+Shift, Ctrl+Alt o Alt+Shift e una lettera A–Z. Una combinazione occupata viene segnalata e resta valida quella precedente.
+### Scarica una build
 
-**Avvia all'accesso a Windows** funziona sia con MSIX sia nella versione portabile. Con MSIX usa StartupTask; nella versione portabile registra l'eseguibile per il solo account corrente. Nessuna elevazione richiesta. All'accesso parte nell'area di notifica, senza aprire il pannello. Mantieni il percorso portabile stabile; se lo sposti, salva nuovamente l'impostazione di avvio. Prima di eliminare la cartella portabile, disabilita l'avvio automatico. Le impostazioni di Windows e le policy aziendali possono impedirne l'esecuzione.
+**[Apri le build Windows su GitHub Actions →](https://github.com/gdetra/KeepClip/actions/workflows/windows-ci.yml?query=branch%3Amain)**
 
-## Dati e limiti
+Apri l'ultima esecuzione di `main` conclusa con successo, scorri fino ad **Artifacts** e scegli il download per il tuo dispositivo:
 
-Testo Unicode e bitmap normalizzate in PNG. Niente file o formattazione HTML. Massimo 200 elementi e 250 MiB complessivi; massimo 20 MiB per PNG e 40 megapixel prima della decodifica. I preferiti non vengono espulsi automaticamente: quando impediscono l'acquisizione di nuovi elementi, compare un avviso.
+| Architettura | Per quale PC | Artifact |
+| --- | --- | --- |
+| [x64](https://github.com/gdetra/KeepClip/actions/workflows/windows-ci.yml?query=branch%3Amain) | La maggior parte dei PC Intel e AMD a 64 bit | `KeepClip-<versione>-windows-x64` |
+| [ARM64](https://github.com/gdetra/KeepClip/actions/workflows/windows-ci.yml?query=branch%3Amain) | Windows su ARM, ad esempio Snapdragon | `KeepClip-<versione>-windows-arm64` |
+| [x86](https://github.com/gdetra/KeepClip/actions/workflows/windows-ci.yml?query=branch%3Amain) | Sistemi Windows a 32 bit compatibili | `KeepClip-<versione>-windows-x86` |
 
-Versione portabile: dati in `%LOCALAPPDATA%\ClipShelf`. Installazione MSIX: cartella LocalState del pacchetto. Il percorso effettivo compare nelle impostazioni. Le due modalità hanno cartelle dati separate.
+Per scaricare gli artifact servono l'accesso a GitHub e i permessi sul repository. Ogni artifact contiene uno **ZIP portabile**, un **MSIX non firmato** e i checksum **`SHA256SUMS.txt`**. La conservazione richiesta è di 14 giorni, entro i limiti del repository; non vengono create automaticamente GitHub Releases.
 
-Nessun account o invio di contenuti in rete. I dati non sono cifrati dall'app. Il log `diagnostic.log` contiene eventi, conteggi e codici d'errore, mai testo o immagini copiati. Il ripristino della cronologia crea prima un backup completo dei file, poi una cronologia vuota.
+### Avvio rapido
+
+1. Estrai completamente lo **ZIP portabile interno** in una cartella stabile.
+2. Avvia `KeepClip.exe`, mantenendo insieme tutti i file estratti. Il pacchetto include .NET e Windows App Runtime.
+3. Copia un testo e apri la cronologia con **Win+V**, quando abilitato, oppure **Ctrl+Shift+V**.
+
+L'app resta nell'area di notifica. Dal suo menu puoi aprire le impostazioni, mettere la cattura in pausa o uscire. Prima di avviare una nuova build, scegli **Esci** nella precedente istanza.
+
+Il pacchetto MSIX richiede una firma con un certificato attendibile prima dell'installazione. Per provare l'app senza configurare la firma, usa lo ZIP portabile.
+
+Se l'app non compare, esegui **`Avvia-con-diagnostica.cmd`** dalla cartella estratta: verifica i file e indica dove trovare il rapporto di avvio.
+
+## Come si usa
+
+| Azione | Comando |
+| --- | --- |
+| Aprire o richiamare il pannello | **Win+V** quando abilitato; alternativa predefinita **Ctrl+Shift+V** |
+| Cercare una copia | Scrivi nella casella di ricerca |
+| Incollare una copia | Clic sulla scheda, oppure frecce e **Invio** |
+| Chiudere senza incollare | **Esc** |
+| Conservare una copia | Pulsante **Preferito** sulla scheda |
+| Mostrare solo i preferiti | Filtro **Preferiti** in alto |
+| Eliminare una copia | Pulsante **Elimina** sulla scheda |
+
+Preferito ed Elimina agiscono sulla scheda senza incollarla. **Svuota…** conserva i preferiti, salvo scelta esplicita di includerli.
+
+La **copia alla selezione** è opzionale: acquisisce il testo non modificabile esposto dalle applicazioni a Windows. Per campi di input, password e controlli non compatibili usa Ctrl+C. L'incolla verso finestre avviate come amministratore può richiedere Ctrl+V manuale.
+
+### Demo
+
+![Dalla cronologia completa alla ricerca del testo Ciao](docs/media/keepclip-search.gif)
+
+*Sequenza di catture reali: cronologia completa e risultato della ricerca “Ciao”, con soli dati fittizi. [Preparazione dei media](docs/media/README.md).*
+
+<p align="right"><a href="#readme-top">Torna all'inizio ↑</a></p>
+
+## Privacy e dati locali
+
+KeepClip conserva la cronologia **sul dispositivo**, senza account e senza inviare i contenuti degli appunti in rete.
+
+- Nella versione portabile i dati sono nell'area locale dell'utente, normalmente `%LOCALAPPDATA%\KeepClip`; con MSIX vengono usati i dati locali del pacchetto. Il percorso effettivo è visibile nelle impostazioni.
+- Il database SQLite e le immagini della cronologia sono separati dai file distribuiti dell'app.
+- La cronologia **non è cifrata dall'app**. Metti in pausa la cattura quando lavori con contenuti che non vuoi conservare.
+- Per file e cartelle vengono salvati i riferimenti agli originali. Eliminare una scheda non elimina i file; spostare o cancellare gli originali ne impedisce il successivo incolla.
+- Il log diagnostico registra eventi e codici di errore, senza il testo o le immagini copiati.
+
+### Aggiornare un'installazione precedente
+
+Le nuove build usano `%LOCALAPPDATA%\KeepClip`, l'identità MSIX `KeepClip.Personal` e il publisher `CN=KeepClip`. Un pacchetto con un'identità precedente viene considerato un'app distinta da Windows.
+
+Per conservare la cronologia, annota il percorso dati nelle impostazioni della versione precedente e chiudi entrambe le versioni. Conserva una copia di sicurezza dell'intera cartella dati, poi trasferiscine il contenuto nella cartella della nuova installazione prima di usarla. Se la nuova cartella contiene già una cronologia, conservala separatamente: non è previsto l'accorpamento di due database. Reimposta l'avvio automatico dalla nuova versione e disattiva la precedente voce nelle impostazioni di avvio di Windows. La migrazione non avviene automaticamente.
+
+## Compatibilità e limiti
+
+KeepClip è scritto in **C# / WinUI 3 per Windows**, con build x64, ARM64 e x86. macOS e Linux non sono supportati.
+
+Il progetto dichiara Windows 10 dalla build 17763; i requisiti effettivi dipendono anche dalle versioni incluse di .NET e Windows App SDK. La compilazione automatica non certifica l'esecuzione su ogni versione di Windows o dispositivo ARM64. [Verifiche manuali e limiti noti](docs/manual-verification.md).
+
+La cronologia conserva fino a **200 elementi e 250 MiB**. Le immagini sono normalizzate in PNG, fino a 20 MiB e 40 megapixel prima della decodifica. Sono supportati fino a 1000 riferimenti a file/cartelle per copia. OCR, formattazione HTML e file virtuali senza percorso non sono supportati. La destinazione deve accettare il tipo di contenuto incollato.
 
 ## Sviluppo
 
-Requisiti: .NET SDK 10.0.401 e Windows SDK, con strumenti WinUI/XAML disponibili tramite Visual Studio. Apri la soluzione `KeepClip.slnx`. Le versioni NuGet sono centralizzate in `Directory.Packages.props`; i progetti dichiarano solo i pacchetti utilizzati e i lock file fanno parte del progetto.
+Servono lo SDK indicato in [`global.json`](global.json), il runtime .NET 8 per GitVersion e gli strumenti Windows/WinUI del Windows SDK. Apri [`KeepClip.slnx`](KeepClip.slnx) in un ambiente compatibile.
 
 ```powershell
-dotnet restore KeepClip.slnx --locked-mode
 dotnet tool restore
+dotnet restore KeepClip.slnx --locked-mode
 dotnet test tests/KeepClip.Tests --no-restore
 dotnet test tests/KeepClip.Windows.Tests --no-restore
-dotnet build src/KeepClip.App/KeepClip.App.csproj -c Release -p:Platform=x64
-./scripts/Publish-App.ps1 -Architecture x64 -PublishDirectory ./artifacts/publish-x64
-./scripts/Build-Portable.ps1 -SkipBuild -PublishDirectory ./artifacts/publish-x64
+./scripts/Build-Portable.ps1 -Architecture x64
 ```
 
-Per aggiornare una dipendenza, modifica la sua versione in `Directory.Packages.props`, esegui `dotnet restore KeepClip.slnx --force-evaluate` e includi nel commit i lock file aggiornati. Il restore in modalità bloccata verifica che le dipendenze corrispondano ai lock file.
+`-Architecture` accetta `x64`, `arm64` e `x86`. `Build-Package.ps1` genera MSIX; `Publish-App.ps1` produce la cartella con eseguibile e metadati di versione. Con `-SkipBuild` usa un publish generato da quest'ultimo script. Mantieni separati i publish per ZIP e MSIX, perché il packaging MSIX aggiunge il manifest di installazione. Le versioni NuGet sono centralizzate in [`Directory.Packages.props`](Directory.Packages.props).
 
-`Build-Portable.ps1` genera lo ZIP con launcher diagnostico e `KeepClip.package.json`, il manifest di integrita dei file. Per ricompilare e generare insieme lo ZIP, ometti `-SkipBuild`. Il manifest segnala anche estrazioni incomplete o file alterati, senza dipendere dalle DLL presenti sul PC di sviluppo. La verifica locale delle DLL del publish corrente non ha rilevato importazioni dirette mancanti; questo non dimostra l'avvio su ogni versione di Windows. Gli otto test del verificatore si eseguono con `./scripts/Test-PortablePackage.ps1 -FixturesDirectory ./artifacts/package-tests -Architecture x64` (oppure `arm64`, `x86`) e non avviano KeepClip.
+### Versioni da Git
 
-### CI Windows e pacchetti per architettura
+[`GitVersion.yml`](GitVersion.yml) calcola la versione da branch, tag e cronologia. Su `main` le build di sviluppo usano il suffisso `ci`; un tag come `v0.2.0` fissa la versione stabile. Controlla il risultato con `./scripts/Get-Version.ps1`. Per generare una build stabile in CI, applica il tag al commit corrente di `main` e avvia manualmente il workflow su `main`: il solo push del tag non avvia una build.
 
-Il workflow `.github/workflows/windows-ci.yml` parte a ogni push (inclusi i tag) e pull request e puo essere avviato manualmente da **Actions > Windows CI > Run workflow**, quando presente sul branch predefinito. Usa runner Windows con Visual Studio 2026, lo SDK indicato in `global.json` e restore NuGet in modalita bloccata. Il job iniziale GitVersion calcola una sola versione per tutte le architetture, usando cronologia Git e tag completi.
+La CI calcola la versione una volta e la usa per tutte le architetture. Gli script di publish aggiornano le proprietà dell'eseguibile e salvano `KeepClip.version.json`; il packaging usa quei metadati per i nomi degli archivi e la versione numerica MSIX. I build diretti dall'IDE mantengono le versioni predefinite dello SDK.
 
-Prima esegue entrambe le suite di test in processi x64 e x86, inclusi i controlli delle strutture native usate da `SendInput`, e i test di integrita dei pacchetti per tutte e tre le architetture. Poi compila e pubblica l'app self-contained per x64, ARM64 e x86. ARM64 viene compilato da un host x64: la pipeline non verifica l'esecuzione su hardware ARM64 ne l'interazione reale con gli appunti.
+### Quando parte la CI
 
-Al termine, nella pagina della singola esecuzione, **Artifacts** contiene `KeepClip-<versione>-windows-x64`, `KeepClip-<versione>-windows-arm64` e `KeepClip-<versione>-windows-x86`. Ogni artifact contiene uno ZIP portabile, un MSIX non firmato e `SHA256SUMS.txt`. `KeepClip-version` conserva i dati GitVersion; i rapporti TRX sono negli artifact `test-results-*`. La conservazione richiesta e di 14 giorni, entro i limiti del repository. Non vengono create automaticamente GitHub Releases.
+Il workflow [Windows CI](.github/workflows/windows-ci.yml) esegue test e packaging **solo sui push a `main`** che modificano codice o configurazione. Le modifiche limitate a file Markdown o a `docs/` sono escluse. Push su altri branch, pull request e push di tag non avviano build automatiche. L'avvio manuale è disponibile su `main`; selezionando un altro branch o un tag, tutti i job vengono saltati.
 
-Lo ZIP include .NET e Windows App Runtime; estrailo completamente prima dell'avvio. Il pacchetto MSIX richiede una firma attendibile prima dell'installazione. La CI non crea certificati e non richiede segreti di firma. Scegli il pacchetto corrispondente all'architettura del dispositivo; una compilazione riuscita non sostituisce le verifiche manuali su ciascun sistema.
+<p align="right"><a href="#readme-top">Torna all'inizio ↑</a></p>
 
-Per generare localmente i pacchetti (default `x64`):
+---
 
-```powershell
-./scripts/Build-Portable.ps1 -Architecture arm64
-./scripts/Build-Package.ps1 -Architecture arm64
-```
-
-`-Architecture` accetta `x64`, `arm64` e `x86`; `-OutputDirectory` sceglie la cartella degli archivi. Con `-SkipBuild -PublishDirectory <cartella>` viene controllata anche l'architettura PE di `KeepClip.exe`, per evitare pacchetti etichettati in modo errato. Usa publish separati per ZIP e MSIX: lo script MSIX aggiunge il manifest di installazione nella propria cartella.
-
-### Versioni da Git con GitVersion
-
-La configurazione `GitVersion.yml` usa GitHubFlow con `main`, versione iniziale `0.2.0` e build di sviluppo `0.2.0-ci.N`. Il tool GitVersion 6.8.2 e fissato in `.config/dotnet-tools.json`. Prima dei build locali esegui `dotnet tool restore`; il tool richiede il runtime .NET 8, gia installato nel relativo job CI insieme allo SDK dell'app. Con `./scripts/Get-Version.ps1` puoi vedere la versione corrente.
-
-Usa `Publish-App.ps1`, `Build-Portable.ps1` o `Build-Package.ps1` per build versionate. Un semplice `dotnet build` dall'IDE conserva le versioni predefinite dello SDK: l'integrazione GitVersion e applicata dal publish. Gli script impostano Version, AssemblyVersion, FileVersion e InformationalVersion e salvano `KeepClip.version.json` accanto all'eseguibile. ZIP e MSIX leggono questi dati e verificano la versione del file, anche con `-SkipBuild`: i vecchi publish senza metadati devono essere ricreati.
-
-Per fissare un rilascio, sul commit verificato di `main` crea e pubblica un tag:
-
-```powershell
-git tag -a v0.2.0 -m "KeepClip 0.2.0"
-git push origin v0.2.0
-```
-
-Il tag determina la SemVer `0.2.0`; i pacchetti saranno `KeepClip-0.2.0-windows-x64.zip` e `.msix`, con analoghi nomi ARM64/x86. Dopo il tag, i commit su main preparano la patch successiva. Per chiedere incrementi espliciti, aggiungi `+semver: minor`, `+semver: major` o `+semver: patch` al messaggio del commit. Prima di 1.0.0 GitVersion applica le proprie regole per la fase iniziale: controlla sempre la versione calcolata prima di scegliere il tag. [Configurazione ufficiale](https://gitversion.net/docs/reference/configuration).
-
-MSIX richiede quattro numeri: usiamo Major.Minor.Patch.WeightedPreReleaseNumber, ad esempio `0.2.0.55028` per una build ci e `0.2.0.60000` per il tag stabile. Questo consente alla release stabile di aggiornare i precedenti pacchetti ci della stessa versione. I componenti devono rimanere entro 65535; il packaging fallisce se superano tale limite. La numerazione e destinata alla distribuzione MSIX diretta; un'eventuale pubblicazione Microsoft Store richiedera una politica con quarta componente zero. La versione completa e il commit restano nei metadati e nelle proprieta dell'eseguibile.
-
-Le verifiche dedicate sono `./scripts/Test-Versioning.ps1` e `./scripts/Test-GitVersion.ps1`; la seconda crea repository temporanei sotto artifacts e non aggiunge tag al progetto reale.
-
-Per cambiare architettura dall'IDE, seleziona `x64`, `ARM64` o `x86` nella soluzione. `Any CPU` mantiene l'app x64. Le piattaforme e i runner sono descritti nella [documentazione delle immagini GitHub Actions](https://github.com/actions/runner-images#available-images).
-
-Chiudi l'app prima di ricompilare lo stesso percorso che stai eseguendo, per evitare file bloccati.
-
-### Servizio asincrono degli appunti
-
-L'app usa un unico `AsyncClipboardService` per cattura, copia alla selezione e incolla. La coda serializza le operazioni e un dispatcher STA dedicato esegue le chiamate Windows fuori dal thread della finestra. Una scrittura in attesa viene annullata se gli appunti cambiano o la richiesta non è più valida (nuovo gesto, cambio di focus, pausa o chiusura del pannello). Il controllo viene ripetuto subito prima di pubblicare il contenuto, anche dopo la preparazione di immagini e file. La chiusura cancella le richieste pendenti; le chiamate Windows già in corso terminano prima di liberare la coda.
-
-Il monitor acquisisce il contenuto prima del salvataggio. Le istantanee acquisite entrano nella coda della cronologia, dove vengono risolti origine e icona e si aggiorna SQLite. Windows notifica i cambiamenti in modo asincrono, quindi un contenuto già sostituito prima della lettura può andare perso.
-
-La lettura e la scrittura degli appunti usano Win32. Il testo usa CF_UNICODETEXT, i file e le cartelle usano CF_HDROP e le immagini usano PNG o CF_DIB/CF_DIBV5. In scrittura, le immagini pubblicano PNG e CF_DIBV5, mentre i file impostano Preferred DropEffect=Copy. Il marcatore privato evita che KeepClip ricatturi i propri incolla. La conversione delle immagini in PNG e il controllo dei percorsi avvengono dopo aver chiuso gli appunti.
-
-I test del servizio usano backend simulati, senza leggere o modificare gli appunti del PC. La verifica nelle applicazioni esterne resta manuale.
-
-## MSIX
-
-```powershell
-./scripts/Build-Package.ps1
-# Firma facoltativa con un certificato già presente in CurrentUser/My:
-./scripts/Build-Package.ps1 -SkipBuild -CertificateThumbprint '<impronta del certificato>'
-```
-
-Output: `artifacts/KeepClip-<SemVer>-windows-x64.msix`; la versione numerica del manifest viene impostata dai metadati GitVersion del publish. L'Identity Publisher del manifest è `CN=ClipShelf`: il certificato di firma deve avere lo stesso subject. Il pacchetto fornito è **non firmato**, quindi non è direttamente installabile. La firma e l'attendibilità del certificato sul dispositivo restano da configurare dall'utente. Lo script non crea certificati, non li installa e non cambia le policy di Windows. La versione portabile si può usare senza questa procedura.
-
-## Verifica e limiti residui
-
-Vedi `docs/manual-verification.md`. I test automatici verificano cronologia, persistenza, ricerca, controllo del destinatario e logica dell'avvio. Non certificano l'effettivo incolla in ogni app né l'accesso successivo a Windows.
-
-Windows può impedire l'incolla verso un processo elevato: l'elemento resta copiato e l'app propone Ctrl+V manuale. La destinazione deve accettare il tipo di contenuto scelto. L'accettazione di SendInput non dimostra che l'app esterna abbia incollato il contenuto.
-
-Le card mostrano nome e icona locale del programma da cui proviene la copia. Il proprietario degli appunti ha priorità; se è assente o è un intermediario di Windows, si usa l'app in primo piano rilevata alla notifica della copia, abbinata alla stessa sequenza degli appunti. Il percorso dell'eseguibile si legge con permessi limitati, anche nella versione portable. Per le app con pacchetto, un errore nel caricamento del logo non elimina il nome già riconosciuto. Il riconoscimento resta una stima nei casi intermediati: una copia in background senza proprietario può essere attribuita all'app attiva. Se non ci sono informazioni utilizzabili, resta «Origine sconosciuta».
-
-La provenienza viene salvata per testo, immagini e file, anche con la copia su selezione. Le voci già salvate non vengono corrette retroattivamente: ricopiando un contenuto si aggiorna la sua provenienza. Il log `diagnostic.log` contiene `source-identity`, `source-attribution` ed eventuali `source-error`, con PID, nome processo, disponibilità del percorso/logo e codici di errore; non registra testo copiato, percorsi o titoli delle finestre.
-
-Le card hanno un header con icona da 40 px e nome del programma, anteprima separata e data nel footer. Il suono opzionale è un chime morbido da 180 ms. La selezione usa il punto iniziale e finale del trascinamento, l'albero UIA completo e un fallback sul focus limitato allo stesso documento testuale; tre tentativi gestiscono la selezione tardiva, annullandosi se cambiano appunti, focus o gesto. Verifica manualmente trascinamento e doppio clic in ChatGPT e Teams desktop, anche terminando nel margine del messaggio. Se un controllo non espone la selezione a UI Automation, usa Ctrl+C: il log diagnostic.log contiene tentativi/esito senza testo.
-
-Diagnostica selezione v2: registra request, nome processo, fase SetContent/Flush con HRESULT, motivi di annullamento (nuovo gesto, focus, appunti, pausa), numero di provider TextPattern, selezione vuota/discontinua e processi non coincidenti. Non registra testo copiato, titoli delle finestre o contenuti chat. Per raccogliere evidenza, avvia questa versione e ripeti 2–3 selezioni in ChatGPT desktop, annotando una riuscita e una fallita. I log portable si trovano in %LOCALAPPDATA%/ClipShelf/diagnostic.log. La precedente versione publish-diagnostics-x64 aggiungeva solo diagnostica; la versione attuale include la correzione descritta sotto.
-
-Correzione appunti occupati: quando Flush restituisce 0x800401D0, vengono effettuati fino a tre ritentativi dopo 40, 100 e 200 ms. SetContent non viene ripetuto. Se la sequenza cambia, si verifica il token privato: il rendering della stessa copia non annulla il flush, mentre una nuova copia lo annulla per preservarla. Gli errori diversi e quelli persistenti restano visibili nel log. Prova manuale: ripeti la selezione che falliva in ChatGPT desktop e controlla card, suono e Ctrl+V; se copi altro durante l'attesa, deve essere mantenuta la copia più recente.
-
-File e cartelle: Ctrl+C in Esplora file crea una card per l'intera selezione (fino a 1000 elementi), con nomi, conteggio e app di provenienza. Si conservano i riferimenti agli originali, senza duplicarli nella cartella di KeepClip: modifiche agli originali si riflettono nel successivo incolla. Spostamento, eliminazione o indisponibilità di uno degli originali bloccano l'intero incolla con un avviso; puoi ripristinare l'originale o eliminare la card. Preferiti, ricerca, persistenza e suono funzionano anche per i file. L'incolla pubblica la lista nativa Windows [CF_HDROP](https://learn.microsoft.com/en-us/windows/win32/shell/clipboard#cf_hdrop), utilizzabile da Esplora file e dalle app che accettano file dagli appunti. Il trasferimento preferito è sempre una copia, anche per elementi acquisiti con Taglia. File virtuali senza percorso non sono supportati. Eliminare card o cronologia non elimina gli originali.
-
-Correzione dell'incolla dei file nelle chat: il percorso passa dalla pubblicazione WinRT di StorageItems a una lista `CF_HDROP` esplicita. La preparazione avviene prima di aprire gli appunti; le verifiche della sequenza e della richiesta vengono ripetute dopo OpenClipboard, immediatamente prima di sostituire i dati. Se gli appunti sono occupati, si ritenta dopo 40, 100 e 200 ms. Il marcatore privato evita di riacquisire l'incolla come una nuova copia da origine sconosciuta. I log riportano backend, numero di file, tipo di contenuto ed eventuali errori, senza nomi o percorsi dei file. La compatibilità effettiva con Teams/ChatGPT deve essere verificata dall'utente con lo stesso file per cui Ctrl+V diretto funziona.
-
-
-## Icona dell'app
-
-Logo ufficiale: due fogli corallo e ambra con sfondo trasparente. Gli asset per eseguibile, finestre, area di notifica e MSIX sono inclusi nel progetto. Per rigenerarli dal master: `./scripts/Generate-AppIcons.ps1`. Vedi `branding/README.md` per dimensioni, provenienza e prompt.
-
-Verifica manuale: dopo aver chiuso la versione precedente, avvia `artifacts/publish-async-clipboard-x64/KeepClip.exe` e controlla l'icona nell'area di notifica, nell'header della cronologia e nella barra del titolo delle impostazioni. In Esplora file verifica l'icona dell'eseguibile; prova anche un fattore di scala dello schermo diverso dal 100%.
-
-## Cambio di nome
-
-KeepClip è il nuovo nome di ClipShelf. Il nome compare in finestre, notifiche, metadati Windows e pacchetto; l'eseguibile è `KeepClip.exe`. L'icona corallo e ambra resta quella scelta.
-
-Per conservare i dati e la compatibilità, restano la cartella portabile `%LOCALAPPDATA%\ClipShelf`, l'identità MSIX `ClipShelf.Personal` / `CN=ClipShelf`, gli identificatori di avvio e di istanza unica. Soluzione, progetti, cartelle e namespace ora usano KeepClip. La prenotazione di KeepClip e l'identità definitiva dello Store vanno configurate nella preparazione alla pubblicazione.
-
-Chiudi la versione precedente prima di avviare KeepClip. Se usi l'avvio automatico portabile, attivalo nelle impostazioni di questa versione e premi Salva impostazioni: il percorso registrato deve puntare a `KeepClip.exe` nella cartella che conserverai.
+Struttura del README ispirata a [Best-README-Template](https://github.com/othneildrew/Best-README-Template), adattata a KeepClip.

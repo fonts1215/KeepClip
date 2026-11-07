@@ -28,7 +28,7 @@ public partial class App : Microsoft.UI.Xaml.Application
         try
         {
             try { dataPath = Windows.Storage.ApplicationData.Current.LocalFolder.Path; }
-            catch { dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ClipShelf"); }
+            catch { dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "KeepClip"); }
             DiagnosticLog.DirectoryPath = dataPath; DiagnosticLog.Write("app-start diagnostics=native-clipboard-v2");
             startupStage = "settings";
             settingsStore = new(dataPath); string? startupError = null;

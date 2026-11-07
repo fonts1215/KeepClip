@@ -53,7 +53,7 @@ try {
                         $errorCause = $errorCause.InnerException
                     }
                 }
-                $logPath = Join-Path $env:LOCALAPPDATA 'ClipShelf/diagnostic.log'
+                $logPath = Join-Path $env:LOCALAPPDATA 'KeepClip/diagnostic.log'
                 if (Test-Path -LiteralPath $logPath -PathType Leaf) {
                     $startupLines = @(Get-Content -LiteralPath $logPath -Tail 120 | Where-Object { $_ -match '^([0-9T:.+Z-]+)\s' -and [DateTimeOffset]::Parse($matches[1]).LocalDateTime -ge $start.AddSeconds(-2) -and $_ -match 'app-start|app-ready|startup-failure|shelf-start|startup-stage|startup-error' })
                     Add-Report 'Log di avvio (solo eventi avvio, senza contenuti copiati):'
