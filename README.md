@@ -112,11 +112,17 @@ La **copia alla selezione** è opzionale: acquisisce il testo non modificabile e
 
 KeepClip conserva la cronologia **sul dispositivo**, senza account e senza inviare i contenuti degli appunti in rete.
 
-- Nella versione portabile i dati sono nell'area locale dell'utente, normalmente `%LOCALAPPDATA%\ClipShelf`; con MSIX vengono usati i dati locali del pacchetto. Il percorso effettivo è visibile nelle impostazioni.
+- Nella versione portabile i dati sono nell'area locale dell'utente, normalmente `%LOCALAPPDATA%\KeepClip`; con MSIX vengono usati i dati locali del pacchetto. Il percorso effettivo è visibile nelle impostazioni.
 - Il database SQLite e le immagini della cronologia sono separati dai file distribuiti dell'app.
 - La cronologia **non è cifrata dall'app**. Metti in pausa la cattura quando lavori con contenuti che non vuoi conservare.
 - Per file e cartelle vengono salvati i riferimenti agli originali. Eliminare una scheda non elimina i file; spostare o cancellare gli originali ne impedisce il successivo incolla.
 - Il log diagnostico registra eventi e codici di errore, senza il testo o le immagini copiati.
+
+### Aggiornare un'installazione precedente
+
+Le nuove build usano `%LOCALAPPDATA%\KeepClip`, l'identità MSIX `KeepClip.Personal` e il publisher `CN=KeepClip`. Un pacchetto con un'identità precedente viene considerato un'app distinta da Windows.
+
+Per conservare la cronologia, annota il percorso dati nelle impostazioni della versione precedente e chiudi entrambe le versioni. Conserva una copia di sicurezza dell'intera cartella dati, poi trasferiscine il contenuto nella cartella della nuova installazione prima di usarla. Se la nuova cartella contiene già una cronologia, conservala separatamente: non è previsto l'accorpamento di due database. Reimposta l'avvio automatico dalla nuova versione e disattiva la precedente voce nelle impostazioni di avvio di Windows. La migrazione non avviene automaticamente.
 
 ## Compatibilità e limiti
 

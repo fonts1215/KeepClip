@@ -6,7 +6,7 @@ internal sealed record StartupResult(bool Enabled, bool Available, string? Messa
 internal sealed class StartupService
 {
     const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    const string ValueName = "ClipShelf";
+    const string ValueName = "KeepClip";
     static bool IsPackaged { get { try { _ = Package.Current.Id.Name; return true; } catch { return false; } } }
     public async Task<StartupResult> GetAsync()
     {
@@ -20,7 +20,7 @@ internal sealed class StartupService
             }
             catch { return new(false, false, "Impossibile leggere l'avvio automatico per questo account Windows."); }
         }
-        try { var task = await StartupTask.GetAsync("ClipShelfStartup"); return Result(task.State); }
+        try { var task = await StartupTask.GetAsync("KeepClipStartup"); return Result(task.State); }
         catch { return new(false, false, "Impossibile leggere lo stato di avvio del pacchetto."); }
     }
     public async Task<StartupResult> SetEnabledAsync(bool enabled)
@@ -38,7 +38,7 @@ internal sealed class StartupService
         }
         try
         {
-            var task = await StartupTask.GetAsync("ClipShelfStartup");
+            var task = await StartupTask.GetAsync("KeepClipStartup");
             if (!enabled) { task.Disable(); return Result(task.State); }
             return Result(await task.RequestEnableAsync());
         }

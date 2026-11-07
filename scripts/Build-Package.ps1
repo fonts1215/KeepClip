@@ -41,7 +41,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Creazione MSIX non riuscita.' }
 if ($CertificateThumbprint) {
     # Sign with an existing certificate in CurrentUser/My; no private key or password is stored here.
     & (Join-Path $sdk.FullName 'x64/signtool.exe') sign /fd SHA256 /sha1 $CertificateThumbprint $packagePath
-    if ($LASTEXITCODE -ne 0) { throw 'Firma non riuscita. Il subject deve essere CN=ClipShelf.' }
+    if ($LASTEXITCODE -ne 0) { throw 'Firma non riuscita. Il subject deve essere CN=KeepClip.' }
 }
 Write-Output "Pacchetto: $packagePath"
 if (-not $CertificateThumbprint) { Write-Output 'Pacchetto non firmato: occorre firmarlo prima di installarlo.' }
